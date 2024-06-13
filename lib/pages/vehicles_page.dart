@@ -6,7 +6,7 @@ class VehiclesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: const Text('Vehicles'),
+          title: const Text('Your Vehicles'),
           centerTitle: true,
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,

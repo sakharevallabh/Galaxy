@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:galaxy/provider/navigation_provider.dart';
 import 'package:galaxy/widget/navigation_drawer_widget.dart';
 import 'package:provider/provider.dart';
 
-// void main() {
-//   runApp(const MyApp());
-// }
-
-Future main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-
+void main() {
   runApp(const MyApp());
 }
+
+// Future main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   await SystemChrome.setPreferredOrientations([
+//     DeviceOrientation.portraitUp,
+//     DeviceOrientation.portraitDown,
+//   ]);
+
+//   runApp(const MyApp());
+// }
 
 class MyApp extends StatelessWidget {
   static const String title = "Galaxy Application";

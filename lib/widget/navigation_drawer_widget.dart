@@ -161,7 +161,7 @@ class NavigationDrawerWidget extends StatelessWidget {
         ));
     switch (index) {
       case 0:
-        navigateTo(const MyApp());
+        Navigator.pop(context);
         break;
       case 1:
         navigateTo(const PeoplePage());
