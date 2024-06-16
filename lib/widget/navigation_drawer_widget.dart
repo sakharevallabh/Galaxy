@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:galaxy/data/drawer_items.dart';
 import 'package:galaxy/main.dart';
-import 'package:galaxy/model/drawer_item.dart';
+import 'package:galaxy/model/drawer_model.dart';
 import 'package:galaxy/pages/accounts_page.dart';
 import 'package:galaxy/pages/achivements_page.dart';
 import 'package:galaxy/pages/assets_page.dart';
@@ -15,10 +15,15 @@ import 'package:galaxy/pages/vehicles_page.dart';
 import 'package:galaxy/provider/navigation_provider.dart';
 import 'package:provider/provider.dart';
 
-class NavigationDrawerWidget extends StatelessWidget {
-  final padding = const EdgeInsets.symmetric(horizontal: 20);
-
+class NavigationDrawerWidget extends StatefulWidget {
   const NavigationDrawerWidget({super.key});
+
+  @override
+  NavigationDrawerWidgetState createState() => NavigationDrawerWidgetState();
+}
+
+class NavigationDrawerWidgetState extends State<NavigationDrawerWidget> {
+  final padding = const EdgeInsets.symmetric(horizontal: 20);
 
   @override
   Widget build(BuildContext context) {
@@ -27,11 +32,6 @@ class NavigationDrawerWidget extends StatelessWidget {
     final provider = Provider.of<NavigationProvider>(context);
     final isCollapsed = provider.isCollapsed;
 
-    // final drawerWidth = isCollapsed ? MediaQuery.of(context).size.width * 0.2 : null;
-
-    // return SizedBox(
-    //   width: drawerWidth,
-    //   child:
     return Drawer(
       width: isCollapsed ? MediaQuery.of(context).size.width * 0.2 : null,
       child: Container(
@@ -57,7 +57,6 @@ class NavigationDrawerWidget extends StatelessWidget {
           ],
         ),
       ),
-      // ),
     );
   }
 
@@ -113,7 +112,6 @@ class NavigationDrawerWidget extends StatelessWidget {
     int indexOffset = 0,
   }) => 
       ListView.separated(
-      // ListView.builder(
         padding: isCollapsed ? EdgeInsets.zero : padding,
         shrinkWrap: true,
         primary: false,
@@ -161,7 +159,7 @@ class NavigationDrawerWidget extends StatelessWidget {
         ));
     switch (index) {
       case 0:
-        Navigator.pop(context);
+        navigateTo(const MyHomePage(title: 'Galaxy View'));
         break;
       case 1:
         navigateTo(const PeoplePage());

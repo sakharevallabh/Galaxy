@@ -1,39 +1,73 @@
 import 'package:flutter/material.dart';
+import 'package:galaxy/model/person_model.dart';
+import 'package:galaxy/views/details/person_details.dart';
+import 'package:galaxy/views/overview/people_overview.dart';
+import 'package:galaxy/views/forms/add_person.dart';
 
-class PeoplePage extends StatelessWidget {
+class PeoplePage extends StatefulWidget {
   const PeoplePage({super.key});
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          title: const Text('People'),
-          centerTitle: true,
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
-        ),
-        body: Container(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/images/People.jpg'),
-              fit: BoxFit.cover,
-              alignment: Alignment.topCenter,
-            ),
+  PeoplePageState createState() => PeoplePageState();
+}
+
+class PeoplePageState extends State<PeoplePage> {
+  int _selectedIndex = 0;
+  final PersonModel selectedPerson =
+      const PersonModel(name: 'Alice', age: 30, address: '123 Main St');
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      bottomNavigationBar: NavigationBar(
+        onDestinationSelected: (int index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        selectedIndex: _selectedIndex,
+        destinations: const [
+          NavigationDestination(
+            selectedIcon: Icon(Icons.people),
+            icon: Icon(Icons.people_alt_outlined),
+            label: 'All People',
           ),
-          child: const Center(
-            child: Column(
-              // mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  'Who is part of your Universe??',
-                  style: TextStyle(
-                    color: Colors.black, // Change text color here
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                )
-              ],
-            ),
+          NavigationDestination(
+            selectedIcon: Icon(Icons.person),
+            icon: Icon(Icons.person_outlined),
+            label: 'Details',
           ),
+          NavigationDestination(
+            selectedIcon: Icon(Icons.person_add_rounded),
+            icon: Icon(Icons.person_add_outlined),
+            label: 'Add New',
+          ),
+        ],
+      ),
+      appBar: AppBar(
+        title: const Text('People Galaxy'),
+        centerTitle: true,
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+      ),
+      body: SafeArea(
+        top: false,
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: [
+            // First Route
+            const PeopleOverview(),
+
+            // Second Route
+            PersonDetailsPage(
+                person: selectedPerson,
+                heroTag: 'person_${selectedPerson.name}'),
+
+            // Third Route
+            const AddPersonView(),
+          ],
         ),
-      );
+      ),
+    );
+  }
 }

@@ -1,6 +1,6 @@
 // Define your drawer items as data objects
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/drawer_item.dart';
+import 'package:galaxy/model/drawer_model.dart';
 
 final drawerItemsFirst = [
   DrawerItemModel(title: 'Home', icon: Icons.home, onTap: () {  }),

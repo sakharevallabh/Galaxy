@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:galaxy/provider/navigation_provider.dart';
 import 'package:galaxy/widget/navigation_drawer_widget.dart';
 import 'package:provider/provider.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-// Future main() async {
+// void main() {
 //   WidgetsFlutterBinding.ensureInitialized();
-//   await SystemChrome.setPreferredOrientations([
-//     DeviceOrientation.portraitUp,
-//     DeviceOrientation.portraitDown,
-//   ]);
-
 //   runApp(const MyApp());
 // }
+
+Future main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   static const String title = "Galaxy Application";
@@ -29,11 +31,11 @@ class MyApp extends StatelessWidget {
         child: MaterialApp(
           title: title.toString(),
           theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
+            // colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
             useMaterial3: true,
           ),
           home: const MyHomePage(title: 'Galaxy View'),
-          color: Colors.amber,
+          // color: Colors.amber,
         ),
       );
 }

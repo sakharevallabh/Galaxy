@@ -62,13 +62,8 @@ flutter:
   assets:
     - assets/images/GalaxyLogo.png
     - assets/images/Background.png
-    - assets/images/People.jpg
-    - assets/images/Documents.jpg
-    - assets/images/Accounts.jpg
-    - assets/images/Vehicles.jpg
-    - assets/images/Assets.jpg
-    - assets/images/Expenses.jpg
-    - assets/images/Achievements.jpg
+    - assets/images/add_car.png
+    - assets/images/add_car_outlined.png
     - assets/images/My_Universe.jpg
     - assets/images/Profile_Settings.jpg
     - assets/images/Settings.jpg
