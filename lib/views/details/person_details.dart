@@ -119,21 +119,21 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     DatabaseHelper databaseHelper = DatabaseHelper();
 
     // Call your database update method here
-    // int rowsAffected = await databaseHelper.updatePerson(updatedPerson);
+    int rowsAffected = await databaseHelper.updatePerson(updatedPerson);
 
-    // if (mounted) {
-    //   if (rowsAffected > 0) {
-    //     // Show feedback to the user
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       const SnackBar(content: Text('Changes saved successfully')),
-    //     );
-    //   } else {
-    //     // Handle error saving
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       const SnackBar(content: Text('Failed to save changes')),
-    //     );
-    //   }
-    // }
+    if (mounted) {
+      if (rowsAffected > 0) {
+        // Show feedback to the user
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Changes saved successfully')),
+        );
+      } else {
+        // Handle error saving
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to save changes')),
+        );
+      }
+    }
   }
 
   @override

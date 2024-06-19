@@ -87,10 +87,10 @@ class DatabaseHelper {
     return await db.query(tablePerson);
   }
 
-  // Future<int> updatePerson(PersonModel person) async {
-  Future<int> updatePerson(int id, Map<String, dynamic> row) async {
+  Future<int> updatePerson(PersonModel person) async {
+  // Future<int> updatePerson(int id, Map<String, dynamic> row) async {
     Database db = await database;
-    return await db.update(tablePerson, row, where: 'id = ?', whereArgs: [id]);
-    // return await db.update(tablePerson, person.toMap(), where: "id = ?", whereArgs: [person.id]);
+    // return await db.update(tablePerson, row, where: 'id = ?', whereArgs: [id]);
+    return await db.update(tablePerson, person.toMap(), where: "id = ?", whereArgs: [person.id]);
   }
 }

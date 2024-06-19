@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:galaxy/helpers/people_database_helper.dart';
@@ -16,6 +17,8 @@ class AddPersonView extends StatefulWidget {
 class AddPersonViewState extends State<AddPersonView> {
   final _formKey = GlobalKey<FormState>();
   final logger = Logger();
+  File? _image;
+  final Map<String, dynamic> _formData = {};
 
   // Controllers for form fields
   final _firstNameController = TextEditingController();
@@ -75,13 +78,13 @@ class AddPersonViewState extends State<AddPersonView> {
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
     if (pickedFile != null) {
-      pickedFile.readAsBytes().then((value) {
-        setState(() {
-          _photo = value;
-        });
-      }).catchError((error) {
+    pickedFile.readAsBytes().then((value) {
+    setState(() {
+      _image = File(pickedFile.path);
+      _photo = value;
+    });
+    }).catchError((error) {
         logger.d('Error reading image: $error');
       });
     }
@@ -96,7 +99,11 @@ class AddPersonViewState extends State<AddPersonView> {
 }
 
   Future<void> _saveForm() async {
-    if (_formKey.currentState?.validate() ?? false) {
+    if (_formKey.currentState!.validate()) {
+       _formKey.currentState!.save();
+      if (_image != null) {
+        _formData['photo'] = _image!.path;
+      }
       final userId = await _databaseHelper.insertPerson({
         'firstName': _firstNameController.text,
         'middleName': _middleNameController.text,
@@ -153,8 +160,6 @@ class AddPersonViewState extends State<AddPersonView> {
        if (widget.onPersonAdded != null) {
         widget.onPersonAdded!();
       }
-      // Clear form fields and photo after saving
-    dispose();
     }   
   }
 
@@ -172,7 +177,7 @@ class AddPersonViewState extends State<AddPersonView> {
                 decoration: const InputDecoration(labelText: 'First Name'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Only First Name is mandatory. Please enter your first name.';
+                    return 'Please enter first name';
                   }
                   return null;
                 },
@@ -237,13 +242,16 @@ class AddPersonViewState extends State<AddPersonView> {
                 onPressed: _pickImage,
                 child: const Text('Select Photo'),
               ),
-              _photo != null
-                  ? Image.memory(
-                      _photo!,
-                      height: 100,
-                      width: 100,
-                    )
-                  : const Text('No image selected'),
+               _image == null
+                ? const Text('No image selected.')
+                : Image.file(_image!),
+              // _photo != null
+              //     ? Image.memory(
+              //         _photo!,
+              //         height: 100,
+              //         width: 100,
+              //       )
+              //     : const Text('No image selected'),
               const SizedBox(height: 10),
               ..._buildDynamicFields( 
                 context,

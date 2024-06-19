@@ -154,10 +154,11 @@ class _MyHomePageState extends State<MyHomePage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.0), // Adjust corner radius
       ),
+      surfaceTintColor: Colors.white30,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(10.0),
         child: ListTile(
-          leading: Icon(icon, size: 50),
+          leading: Icon(icon, size: 30),
           title: Text(title, style: const TextStyle(fontSize: 24)),
           onTap: () {
             if (page != null) {
