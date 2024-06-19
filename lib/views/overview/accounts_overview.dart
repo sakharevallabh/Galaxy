@@ -38,14 +38,14 @@ class AccountsOverviewState extends State<AccountsOverview> {
             ElevatedButton(
               onPressed: _addRandomCard,
               style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.blueAccent, // Text color
+                foregroundColor: Colors.black,
+                backgroundColor: Colors.amber, // Text color
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 textStyle:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              child: const Text('Add an Account'),
+              child: const Text('Add Account'),
             ),
             Expanded(
               child: GridView.builder(

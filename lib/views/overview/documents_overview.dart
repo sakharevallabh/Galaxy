@@ -43,7 +43,7 @@ class DocumentsOverviewState extends State<DocumentsOverview> {
                 textStyle:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              child: const Text('Add a File'),
+              child: const Text('Add File'),
             ),
             Expanded(
               child: GridView.builder(

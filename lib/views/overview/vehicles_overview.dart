@@ -44,7 +44,7 @@ class VehiclesOverviewState extends State<VehiclesOverview> {
                 textStyle:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              child: const Text('Add a Vehicle'),
+              child: const Text('Add Vehicle'),
             ),
             Expanded(
               child: GridView.builder(

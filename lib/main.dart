@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:galaxy/pages/people_page.dart';
 import 'package:galaxy/provider/navigation_provider.dart';
 import 'package:galaxy/widget/navigation_drawer_widget.dart';
 import 'package:provider/provider.dart';
 
 // void main() {
 //   WidgetsFlutterBinding.ensureInitialized();
-//   runApp(const MyApp());
+//   runApp(const My App());
 // }
 
 Future main() async {
@@ -68,13 +69,12 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const NavigationDrawerWidget(),
-
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         title: Text(widget.title),
       ),
+      drawer: const NavigationDrawerWidget(),
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
@@ -86,6 +86,11 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              _buildCard(context, 'People', Icons.people, const PeoplePage()),
+              _buildCard(context, 'Vehicles', Icons.directions_car,
+                  null), // Replace with actual page
+              _buildCard(context, 'Accounts', Icons.account_balance,
+                  null), // Replace with actual page
               const Text(
                 'You have added this many number of items:',
                 style: TextStyle(
@@ -139,6 +144,31 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ]),
       // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  Widget _buildCard(
+      BuildContext context, String title, IconData icon, Widget? page) {
+    return Card(
+      elevation: 10,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.0), // Adjust corner radius
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListTile(
+          leading: Icon(icon, size: 50),
+          title: Text(title, style: const TextStyle(fontSize: 24)),
+          onTap: () {
+            if (page != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => page),
+              );
+            }
+          },
+        ),
+      ),
     );
   }
 }

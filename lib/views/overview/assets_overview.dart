@@ -44,7 +44,7 @@ class AssetsOverviewState extends State<AssetsOverview> {
                 textStyle:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              child: const Text('Add an Asset'),
+              child: const Text('Add Asset'),
             ),
             Expanded(
               child: GridView.builder(

@@ -1,5 +1,7 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:galaxy/helpers/people_database_helper.dart';
+import 'package:galaxy/model/person_model.dart';
+import 'package:galaxy/views/details/person_details.dart';
 
 class PeopleOverview extends StatefulWidget {
   const PeopleOverview({super.key});
@@ -9,78 +11,132 @@ class PeopleOverview extends StatefulWidget {
 }
 
 class PeopleOverviewState extends State<PeopleOverview> {
-  final List<String> _names = ['Alice', 'Bob', 'Charlie', 'David', 'Eve'];
-  final List<IconData> _icons = [
-    Icons.person,
-    Icons.person_outline,
-    Icons.person_pin,
-    Icons.person_rounded,
-  ];
+  late List<PersonModel> _personList;
+  late DatabaseHelper databaseHelper;
+  late TextEditingController _searchController;
 
-  final List<Map<String, dynamic>> _cards = [];
+  @override
+  void initState() {
+    super.initState();
+    databaseHelper = DatabaseHelper();
+    _searchController = TextEditingController();
+    _fetchPeople();
+  }
 
-  void _addRandomCard() {
+  void _fetchPeople() async {
+    List<Map<String, dynamic>> fetchedUsers = await databaseHelper.getPerson();
     setState(() {
-      String randomName = _names[Random().nextInt(_names.length)];
-      IconData randomIcon = _icons[Random().nextInt(_icons.length)];
-      _cards.add({'name': randomName, 'icon': randomIcon});
+      _personList = fetchedUsers.map((userMap) => PersonModel.fromMap(userMap)).toList();
     });
+  }
+
+  void _filterList(String query) {
+    List<PersonModel> filteredList = _personList.where((person) {
+      return person.firstName.toLowerCase().contains(query.toLowerCase());
+    }).toList();
+
+    setState(() {
+      _personList = filteredList;
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose(); // Dispose of the search controller
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          children: <Widget>[
-            ElevatedButton(
-              onPressed: _addRandomCard,
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.blueAccent, // Text color
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                textStyle:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              child: const Text('Add a Person'),
-            ),
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3, // Number of columns in the grid
-                  crossAxisSpacing: 5.0,
-                  mainAxisSpacing: 5.0,
-                ),
-                itemCount: _cards.length,
-                itemBuilder: (context, index) {
-                  return Card(
-                    elevation: 5,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0), // Adjust padding here
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            _cards[index]['icon'],
-                            size: 50,
-                          ),
-                          const SizedBox(height: 2), // Add spacing between icon and text
-                          Text(
-                            _cards[index]['name'],
-                            style: const TextStyle(fontSize: 16),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+      appBar: AppBar(
+        title: Text('All People (${_personList.length})'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: _SearchDelegate(_filterList),
+              );
+            },
+          ),
+        ],
       ),
+      body: _buildPersonList(),
     );
+  }
+
+  Widget _buildPersonList() {
+    return ListView.builder(
+      itemCount: _personList.length,
+      itemBuilder: (context, index) {
+        PersonModel person = _personList[index];
+        return Card(
+          child: ListTile(
+            leading: _buildAvatar(person),
+            title: Text(person.firstName),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PersonDetailsPage(
+                    person: person,
+                    heroTag: 'person_${person.firstName}',
+                  ),
+                ),
+              ).then((value) => _fetchPeople());
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAvatar(PersonModel person) {
+    return person.photo != null
+        ? CircleAvatar(
+            backgroundImage: MemoryImage(person.photo!),
+          )
+        : const CircleAvatar(child: Icon(Icons.person));
+  }
+}
+
+class _SearchDelegate extends SearchDelegate<String> {
+  final Function(String) _filterCallback;
+
+  _SearchDelegate(this._filterCallback);
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, '');
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    _filterCallback(query);
+    return const SizedBox(); // Adjust to show actual search results
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return const SizedBox(); // Suggestions based on query, if needed
   }
 }

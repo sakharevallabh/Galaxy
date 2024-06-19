@@ -43,7 +43,7 @@ class ExpensesOverviewState extends State<ExpensesOverview> {
                 textStyle:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              child: const Text('Add an Expense'),
+              child: const Text('Add Expense'),
             ),
             Expanded(
               child: GridView.builder(

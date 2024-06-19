@@ -44,7 +44,7 @@ class AchievementsOverviewState extends State<AchievementsOverview> {
                 textStyle:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              child: const Text('Add an Achievement'),
+              child: const Text('Add Achievement'),
             ),
             Expanded(
               child: GridView.builder(
