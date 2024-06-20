@@ -15,6 +15,12 @@ class PeopleOverview extends StatelessWidget {
   }
 
   Widget _buildPersonList() {
+    if (personList.isEmpty) {
+      return const Center(
+        child: Text('No persons available'),
+      );
+    }
+
     return ListView.builder(
       itemCount: personList.length,
       itemBuilder: (context, index) {
@@ -32,7 +38,12 @@ class PeopleOverview extends StatelessWidget {
                     heroTag: 'person_${person.firstName}',
                   ),
                 ),
-              );
+              ).then((value) {
+                if (value == true) {
+                  // Trigger a refresh
+                  (context as Element).markNeedsBuild();
+                }
+              });
             },
           ),
         );

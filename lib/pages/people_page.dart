@@ -30,10 +30,10 @@ class PeoplePageState extends State<PeoplePage> {
   }
 
   Future<void> _fetchPeople() async {
-    List<Map<String, dynamic>> fetchedUsers = await databaseHelper.getPerson();
+    List<PersonModel> fetchedUsers = await databaseHelper.getPerson();
     if (mounted) {
       setState(() {
-        _personList = fetchedUsers.map((userMap) => PersonModel.fromMap(userMap)).toList();
+        _personList = fetchedUsers;
         _filteredPersonList = _personList;
       });
     }
@@ -51,6 +51,17 @@ class PeoplePageState extends State<PeoplePage> {
     });
   }
 
+  Future<void> _navigateToAddPerson() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddPersonView()),
+    );
+
+    if (result == true) {
+      _fetchPeople();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,7 +73,7 @@ class PeoplePageState extends State<PeoplePage> {
             onPressed: () {
               showSearch(
                 context: context,
-                delegate: _SearchDelegate(_filterList, _personList),
+                delegate: _SearchDelegate(_filterList),
               );
             },
           ),
@@ -87,15 +98,20 @@ class PeoplePageState extends State<PeoplePage> {
           ),
         ],
       ),
+      // floatingActionButton: _selectedIndex == 1
+      //     ? FloatingActionButton(
+      //         onPressed: _navigateToAddPerson,
+      //         child: const Icon(Icons.add),
+      //       )
+      //     : null,
     );
   }
 }
 
 class _SearchDelegate extends SearchDelegate<String> {
   final Function(String) _filterCallback;
-  final List<PersonModel> _originalPersonList;
 
-  _SearchDelegate(this._filterCallback, this._originalPersonList);
+  _SearchDelegate(this._filterCallback);
 
   @override
   List<Widget> buildActions(BuildContext context) {
@@ -122,19 +138,21 @@ class _SearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildResults(BuildContext context) {
-    final filteredList = _originalPersonList.where((person) {
-      return person.firstName.toLowerCase().contains(query.toLowerCase());
-    }).toList();
-
-    return PeopleOverview(personList: filteredList);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _filterCallback(query);
+    });
+    return PeopleOverview(
+      personList: _filterCallback(query),
+    );
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final filteredList = _originalPersonList.where((person) {
-      return person.firstName.toLowerCase().contains(query.toLowerCase());
-    }).toList();
-
-    return PeopleOverview(personList: filteredList);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _filterCallback(query);
+    });
+    return PeopleOverview(
+      personList: _filterCallback(query),
+    );
   }
 }

@@ -6,7 +6,6 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
-  static Database? _database;
   final String tablePerson = 'person';
 
   factory DatabaseHelper() {
@@ -14,6 +13,7 @@ class DatabaseHelper {
   }
 
   DatabaseHelper._internal();
+  Database? _database;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -82,15 +82,44 @@ class DatabaseHelper {
     return await db.insert('additional_field', row);
   }
 
-  Future<List<Map<String, dynamic>>> getPerson() async {
-    Database db = await database;
-    return await db.query(tablePerson);
+  // Future<List<Map<String, dynamic>>> getPerson() async {
+  //   Database db = await database;
+  //   return await db.query(tablePerson);
+  // }
+
+  Future<List<PersonModel>> getPerson() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tablePerson);
+    return List.generate(maps.length, (i) {
+      return PersonModel.fromMap(maps[i]);
+    });
   }
 
-  Future<int> updatePerson(PersonModel person) async {
-  // Future<int> updatePerson(int id, Map<String, dynamic> row) async {
-    Database db = await database;
-    // return await db.update(tablePerson, row, where: 'id = ?', whereArgs: [id]);
-    return await db.update(tablePerson, person.toMap(), where: "id = ?", whereArgs: [person.id]);
+  // Future<int> updatePerson(PersonModel person) async {
+  //   // Future<int> updatePerson(int id, Map<String, dynamic> row) async {
+  //   Database db = await database;
+  //   // return await db.update(tablePerson, row, where: 'id = ?', whereArgs: [id]);
+  //   return await db.update(tablePerson, person.toMap(),
+  //       where: "id = ?", whereArgs: [person.id]);
+  // }
+
+    Future<void> updatePerson(PersonModel person) async {
+    final db = await database;
+    await db.update(
+      tablePerson,
+      person.toMap(),
+      where: 'id = ?',
+      whereArgs: [person.id],
+    );
+  }
+
+  Future<void> deletePerson(int id) async {
+    final db = await database;
+
+    await db.delete(
+      tablePerson,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }
