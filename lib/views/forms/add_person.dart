@@ -21,9 +21,7 @@ class AddPersonViewState extends State<AddPersonView> {
   final Map<String, dynamic> _formData = {};
 
   // Controllers for form fields
-  final _firstNameController = TextEditingController();
-  final _middleNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
+  final _nameController = TextEditingController();
   final _genderController = TextEditingController();
   final _dobController = TextEditingController();
   final _birthPlaceController = TextEditingController();
@@ -32,22 +30,14 @@ class AddPersonViewState extends State<AddPersonView> {
   final _nationalityController = TextEditingController();
   final _maritalStatusController = TextEditingController();
   final _professionController = TextEditingController();
-
   Uint8List? _photo;
-
-  final List<TextEditingController> _addressControllers = [];
-  final List<TextEditingController> _phoneNumberControllers = [];
-  final List<TextEditingController> _emailAddressControllers = [];
-  final List<TextEditingController> _socialMediaProfileControllers = [];
   final List<Map<String, TextEditingController>> _additionalFields = [];
 
   final DatabaseHelper _databaseHelper = DatabaseHelper();
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _middleNameController.dispose();
-    _lastNameController.dispose();
+    _nameController.dispose();
     _genderController.dispose();
     _dobController.dispose();
     _birthPlaceController.dispose();
@@ -56,18 +46,6 @@ class AddPersonViewState extends State<AddPersonView> {
     _nationalityController.dispose();
     _maritalStatusController.dispose();
     _professionController.dispose();
-    for (var controller in _addressControllers) {
-      controller.dispose();
-    }
-    for (var controller in _phoneNumberControllers) {
-      controller.dispose();
-    }
-    for (var controller in _emailAddressControllers) {
-      controller.dispose();
-    }
-    for (var controller in _socialMediaProfileControllers) {
-      controller.dispose();
-    }
     for (var field in _additionalFields) {
       field['name']?.dispose();
       field['value']?.dispose();
@@ -105,9 +83,7 @@ class AddPersonViewState extends State<AddPersonView> {
         _formData['photo'] = _image!.path;
       }
       final userId = await _databaseHelper.insertPerson({
-        'firstName': _firstNameController.text,
-        'middleName': _middleNameController.text,
-        'lastName': _lastNameController.text,
+        'name': _nameController.text,
         'gender': _genderController.text,
         'dob': _dobController.text,
         'birthPlace': _birthPlaceController.text,
@@ -118,34 +94,6 @@ class AddPersonViewState extends State<AddPersonView> {
         'photo': _photo,
         'profession': _professionController.text,
       });
-
-      for (var controller in _addressControllers) {
-        await _databaseHelper.insertAddress({
-          'userId': userId,
-          'address': controller.text,
-        });
-      }
-
-      for (var controller in _phoneNumberControllers) {
-        await _databaseHelper.insertPhoneNumber({
-          'userId': userId,
-          'phoneNumber': controller.text,
-        });
-      }
-
-      for (var controller in _emailAddressControllers) {
-        await _databaseHelper.insertEmailAddress({
-          'userId': userId,
-          'emailAddress': controller.text,
-        });
-      }
-
-      for (var controller in _socialMediaProfileControllers) {
-        await _databaseHelper.insertSocialMediaProfile({
-          'userId': userId,
-          'profile': controller.text,
-        });
-      }
 
       for (var field in _additionalFields) {
         await _databaseHelper.insertAdditionalField({
@@ -173,7 +121,7 @@ class AddPersonViewState extends State<AddPersonView> {
           child: Column(
             children: [
               TextFormField(
-                controller: _firstNameController,
+                controller: _nameController,
                 decoration: const InputDecoration(labelText: 'First Name'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -181,14 +129,6 @@ class AddPersonViewState extends State<AddPersonView> {
                   }
                   return null;
                 },
-              ),
-              TextFormField(
-                controller: _middleNameController,
-                decoration: const InputDecoration(labelText: 'Middle Name'),
-              ),
-              TextFormField(
-                controller: _lastNameController,
-                decoration: const InputDecoration(labelText: 'Last Name'),
               ),
               TextFormField(
                 controller: _genderController,
@@ -245,34 +185,6 @@ class AddPersonViewState extends State<AddPersonView> {
                _image == null
                 ? const Text('No image selected.')
                 : Image.file(_image!),
-              // _photo != null
-              //     ? Image.memory(
-              //         _photo!,
-              //         height: 100,
-              //         width: 100,
-              //       )
-              //     : const Text('No image selected'),
-              const SizedBox(height: 10),
-              ..._buildDynamicFields( 
-                context,
-                'Address',
-                _addressControllers,
-              ),
-              ..._buildDynamicFields(
-                context,
-                'Phone Number',
-                _phoneNumberControllers,
-              ),
-              ..._buildDynamicFields(
-                context,
-                'Email Address',
-                _emailAddressControllers,
-              ),
-              ..._buildDynamicFields(
-                context,
-                'Social Media Profile',
-                _socialMediaProfileControllers,
-              ),
               const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {

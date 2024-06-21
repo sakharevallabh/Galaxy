@@ -31,9 +31,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE person (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        firstName TEXT NOT NULL,
-        middleName TEXT,
-        lastName TEXT,
+        name TEXT NOT NULL,
         gender TEXT,
         dob TEXT,
         birthPlace TEXT,
@@ -43,10 +41,6 @@ class DatabaseHelper {
         maritalStatus TEXT,
         photo BLOB,
         profession TEXT,
-        addresses TEXT,
-        phone_numbers TEXT,
-        email_addresses TEXT,
-        social_media_profiles TEXT,
         additional_fields TEXT
       )
     ''');
