@@ -44,6 +44,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       'Name': TextEditingController(text: _person.name),
       'Gender': TextEditingController(text: _person.gender),
       'Date of Birth': TextEditingController(text: _person.dob ?? ''),
+      'Age': TextEditingController(),
       'Birth Place': TextEditingController(text: _person.birthPlace),
       'Present Address': TextEditingController(text: _person.presentAddress),
       'Present Country': TextEditingController(text: _person.presentCountry),
@@ -56,6 +57,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     _photo = _person.photo;
     if (_person.dob != null && _person.dob!.isNotEmpty) {
       _dob = DateFormat('yyyy-MM-dd').parse(_person.dob!);
+      _controllers['Age']!.text = _calculateAge(_dob!).toString();
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -136,6 +138,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
           return 'Gender: ${_person.gender}';
         case 'Date of Birth':
           return 'Date of Birth: ${_person.dob}';
+        case 'Age':
+          return 'Age: ${_controllers['Age']!.text}';
         case 'Birth Place':
           return 'Birth Place: ${_person.birthPlace}';
         case 'Present Address':
@@ -170,6 +174,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         _dob = picked;
         _controllers['Date of Birth']!.text =
             DateFormat('yyyy-MM-dd').format(picked);
+        _controllers['Age']!.text = _calculateAge(picked).toString();
       });
     }
   }
@@ -202,6 +207,15 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
                 ScaffoldMessenger.of(context).hideCurrentMaterialBanner(),
           )
         ]));
+  }
+
+  int _calculateAge(DateTime dob) {
+    final now = DateTime.now();
+    int age = now.year - dob.year;
+    if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return age;
   }
 
   @override
@@ -264,6 +278,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
                   'Gender', _controllers['Gender']!, _genders),
               _buildDatePickerField(
                   'Date of Birth', _controllers['Date of Birth']!),
+              _buildEditableField('Age', _controllers['Age']!),
               _buildEditableField('Birth Place', _controllers['Birth Place']!),
               _buildEditableField(
                   'Present Address', _controllers['Present Address']!),
@@ -309,6 +324,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
             ),
             TextFormField(
               controller: controller,
+              readOnly: fieldName == 'Age',
               decoration: InputDecoration(
                 hintText: 'Enter $fieldName',
               ),
@@ -415,7 +431,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   }
 
   Widget _buildDatePickerField(
-      String fieldName, TextEditingController controller) {
+    String fieldName, TextEditingController controller) {
     return GestureDetector(
       onTap: () => _toggleFieldSelection(fieldName),
       child: Container(
