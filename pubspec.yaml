@@ -75,6 +75,7 @@ flutter:
     - assets/images/Profile_Settings.jpg
     - assets/images/Settings.jpg
     - assets/images/placeholder.png
+    - assets/data/countries.json
     
   # To add assets to your application, add an assets section, like this:
   # assets:

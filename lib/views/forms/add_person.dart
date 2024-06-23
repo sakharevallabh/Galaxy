@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:galaxy/helpers/people_database_helper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
@@ -17,11 +19,19 @@ class AddPersonView extends StatefulWidget {
 class AddPersonViewState extends State<AddPersonView> {
   final _formKey = GlobalKey<FormState>();
   final logger = Logger();
+  final DatabaseHelper _databaseHelper = DatabaseHelper();
   XFile? _image;
   Uint8List? _photo;
   final Map<String, dynamic> _formData = {};
   final List<String> _maritalStatuses = ['Married', 'Unmarried', 'Divorced'];
   final List<String> _gender = ['Male', 'Female'];
+  List<String> _countries = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCountries();
+  }
 
   // Controllers for form fields
   late final Map<String, TextEditingController> _controllers = {
@@ -35,10 +45,6 @@ class AddPersonViewState extends State<AddPersonView> {
     'Marital Status': TextEditingController(),
     'Profession': TextEditingController(),
   };
-
-  
-
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -65,20 +71,20 @@ class AddPersonViewState extends State<AddPersonView> {
   }
 
   void _clearForm() {
-     _controllers['Name']!.text = "";
-      _controllers['Gender']!.text = "";
-      _controllers['Date of Birth']!.text = "";
-      _controllers['Birth Place']!.text = "";
-      _controllers['Country']!.text = "";
-      _controllers['Pincode']!.text = "";
-      _controllers['Nationality']!.text = "";
-      _controllers['Marital Status']!.text = "";
-      _controllers['Profession']!.text = "";
-      setState(() {
-        _image = null;
-        _photo = null;
+    _controllers['Name']!.text = "";
+    _controllers['Gender']!.text = "";
+    _controllers['Date of Birth']!.text = "";
+    _controllers['Birth Place']!.text = "";
+    _controllers['Country']!.text = "";
+    _controllers['Pincode']!.text = "";
+    _controllers['Nationality']!.text = "";
+    _controllers['Marital Status']!.text = "";
+    _controllers['Profession']!.text = "";
+    setState(() {
+      _image = null;
+      _photo = null;
       _photo!.clear();
-      });
+    });
   }
 
   Future<void> _saveForm() async {
@@ -109,8 +115,16 @@ class AddPersonViewState extends State<AddPersonView> {
     }
   }
 
+  Future<void> _fetchCountries() async {
+    final String response =
+        await rootBundle.loadString('assets/data/countries.json');
+    final List<dynamic> data = jsonDecode(response);
+    _countries = data.map((country) => country.toString()).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    _fetchCountries();
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -124,7 +138,8 @@ class AddPersonViewState extends State<AddPersonView> {
                   radius: 100,
                   backgroundImage: _image != null
                       ? MemoryImage(_photo!)
-                      : const AssetImage('assets/images/placeholder.png') as ImageProvider,
+                      : const AssetImage('assets/images/placeholder.png')
+                          as ImageProvider,
                 ),
               ),
               const SizedBox(height: 10),
@@ -176,9 +191,16 @@ class AddPersonViewState extends State<AddPersonView> {
                 decoration: const InputDecoration(labelText: 'Birth Place'),
               ),
               const SizedBox(height: 10),
-              TextFormField(
+              SearchField(
                 controller: _controllers['Country']!,
-                decoration: const InputDecoration(labelText: 'Country'),
+                searchInputDecoration: const InputDecoration(
+                  labelText: 'Present Country',
+                ),
+                maxSuggestionsInViewPort: 5,
+                autoCorrect: true,
+                suggestions: _countries
+                    .map((e) => SearchFieldListItem(e, child: Text(e)))
+                    .toList(),
               ),
               const SizedBox(height: 10),
               TextFormField(

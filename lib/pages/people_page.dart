@@ -54,17 +54,6 @@ class PeoplePageState extends State<PeoplePage> {
     });
   }
 
-  // Future<void> _navigateToAddPerson() async {
-  //   final result = await Navigator.push(
-  //     context,
-  //     MaterialPageRoute(builder: (context) => const AddPersonView()),
-  //   );
-
-  //   if (result == true) {
-  //     _fetchPeople();
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -83,7 +72,7 @@ class PeoplePageState extends State<PeoplePage> {
         ],
       ),
       body: _selectedIndex == 0
-          ? PeopleOverview(personList: _filteredPersonList)
+          ? PeopleOverview(personList: _personList)
           : const AddPersonView(),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,

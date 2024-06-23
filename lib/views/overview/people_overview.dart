@@ -5,15 +5,15 @@ import 'package:galaxy/views/details/person_details.dart';
 
 class PeopleOverview extends StatefulWidget {
   final List<PersonModel> personList;
-  
+
   const PeopleOverview({super.key, required this.personList});
   @override
   PeopleOverviewPageState createState() => PeopleOverviewPageState();
 }
 
 class PeopleOverviewPageState extends State<PeopleOverview> {
- List<PersonModel> _personList = [];
- DatabaseHelper databaseHelper = DatabaseHelper();
+  List<PersonModel> _personList = [];
+  DatabaseHelper databaseHelper = DatabaseHelper();
 
   @override
   void initState() {
@@ -21,11 +21,11 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
     _fetchPeople();
   }
 
-    Future<void> _fetchPeople() async {
+  Future<void> _fetchPeople() async {
     List<PersonModel> fetchedUsers = await databaseHelper.getPerson();
-      setState(() {
-        _personList = fetchedUsers;
-      });
+    setState(() {
+      _personList = fetchedUsers;
+    });
   }
 
   @override
@@ -36,13 +36,13 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
   }
 
   Widget _buildPersonList() {
+    _personList = widget.personList;
+
     if (widget.personList.isEmpty) {
       return const Center(
         child: Text('No persons available'),
       );
-    }
-    _personList = widget.personList;
-
+    } else {
     return ListView.builder(
       itemCount: _personList.length,
       itemBuilder: (context, index) {
@@ -61,10 +61,8 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
                   ),
                 ),
               ).then((value) {
-                if (value == true) {
-                  // Trigger a refresh when coming back from details page
-                  (context as Element).markNeedsBuild();
-                }
+                // Trigger a refresh when coming back from details page
+                (context as Element).markNeedsBuild();
               });
             },
           ),
@@ -72,7 +70,7 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
       },
     );
   }
-
+}
   Widget _buildAvatar(PersonModel person) {
     return person.photo != null
         ? CircleAvatar(
@@ -81,4 +79,3 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
         : const CircleAvatar(child: Icon(Icons.person));
   }
 }
-
