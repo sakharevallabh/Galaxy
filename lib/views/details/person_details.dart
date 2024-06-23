@@ -37,9 +37,11 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       'Gender': TextEditingController(text: _person.gender),
       'Date of Birth': TextEditingController(text: _person.dob),
       'Birth Place': TextEditingController(text: _person.birthPlace),
-      'Country': TextEditingController(text: _person.country),
-      'Pincode': TextEditingController(text: _person.pincode),
-      'Nationality': TextEditingController(text: _person.nationality),
+      'Present Address': TextEditingController(text: _person.presentAddress),
+      'Present Country': TextEditingController(text: _person.presentCountry),
+      'Present Pincode': TextEditingController(text: _person.presentPincode),
+      'Permanent Address':
+          TextEditingController(text: _person.permanentAddress),
       'Marital Status': TextEditingController(text: _person.maritalStatus),
       'Profession': TextEditingController(text: _person.profession),
     };
@@ -62,9 +64,10 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       gender: _controllers['Gender']!.text,
       dob: _controllers['Date of Birth']!.text,
       birthPlace: _controllers['Birth Place']!.text,
-      country: _controllers['Country']!.text,
-      pincode: _controllers['Pincode']!.text,
-      nationality: _controllers['Nationality']!.text,
+      presentAddress: _controllers['Present Address']!.text,
+      presentPincode: _controllers['Present Pincode']!.text,
+      presentCountry: _controllers['Present Country']!.text,
+      permanentAddress: _controllers['Permanent Address']!.text,
       maritalStatus: _controllers['Marital Status']!.text,
       profession: _controllers['Profession']!.text,
     );
@@ -121,12 +124,14 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
           return 'Date of Birth: ${_person.dob}';
         case 'Birth Place':
           return 'Birth Place: ${_person.birthPlace}';
+        case 'Present Address':
+          return 'Present Address: ${_person.presentAddress}';
         case 'Country':
-          return 'Country: ${_person.country}';
+          return 'Country: ${_person.presentCountry}';
         case 'Pincode':
-          return 'Pincode: ${_person.pincode}';
-        case 'Nationality':
-          return 'Nationality: ${_person.nationality}';
+          return 'Pincode: ${_person.presentPincode}';
+        case 'Permanent Address':
+          return 'Permanent Address: ${_person.permanentAddress}';
         case 'Marital Status':
           return 'Marital Status: ${_person.maritalStatus}';
         case 'Profession':
@@ -197,9 +202,14 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
               _buildEditableField(
                   'Date of Birth', _controllers['Date of Birth']!),
               _buildEditableField('Birth Place', _controllers['Birth Place']!),
-              _buildEditableField('Country', _controllers['Country']!),
-              _buildEditableField('Pincode', _controllers['Pincode']!),
-              _buildEditableField('Nationality', _controllers['Nationality']!),
+              _buildEditableField(
+                  'Present Address', _controllers['Present Address']!),
+              _buildEditableField(
+                  'Present Country', _controllers['Present Country']!),
+              _buildEditableField(
+                  'Present Pincode', _controllers['Present Pincode']!),
+              _buildEditableField(
+                  'Permanent Address', _controllers['Permanent Address']!),
               _buildEditableField(
                   'Marital Status', _controllers['Marital Status']!),
               _buildEditableField('Profession', _controllers['Profession']!),
@@ -252,14 +262,17 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
                     case 'Birth Place':
                       _person.birthPlace = value;
                       break;
-                    case 'Country':
-                      _person.country = value;
+                    case 'Present Address':
+                      _person.presentAddress = value;
                       break;
-                    case 'Pincode':
-                      _person.pincode = value;
+                    case 'Present Country':
+                      _person.presentCountry = value;
                       break;
-                    case 'Nationality':
-                      _person.nationality = value;
+                    case 'Present Pincode':
+                      _person.presentPincode = value;
+                      break;
+                    case 'Permanent Address':
+                      _person.permanentAddress = value;
                       break;
                     case 'Marital Status':
                       _person.maritalStatus = value;

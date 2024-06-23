@@ -6,9 +6,10 @@ class PersonModel {
   late final String? gender;
   late final String? dob;
   late final String? birthPlace;
-  late final String? country;
-  late final String? pincode;
-  late final String? nationality;
+  late final String? presentAddress;
+  late final String? presentCountry;
+  late final String? presentPincode;
+  late final String? permanentAddress;
   late final String? maritalStatus;
   late final String? profession;
   late final Uint8List? photo;
@@ -19,9 +20,10 @@ class PersonModel {
     this.gender,
     this.dob,
     this.birthPlace,
-    this.country,
-    this.pincode,
-    this.nationality,
+    this.presentAddress,
+    this.presentPincode,
+    this.presentCountry,
+    this.permanentAddress,
     this.maritalStatus,
     this.profession,
     this.photo,
@@ -34,9 +36,10 @@ class PersonModel {
       'gender': gender,
       'dob': dob,
       'birthPlace': birthPlace,
-      'country': country,
-      'pincode': pincode,
-      'nationality': nationality,
+      'presentAddress': presentAddress,
+      'presentCountry': presentCountry,
+      'presentPincode': presentPincode,
+      'permanentAddress': permanentAddress,
       'maritalStatus': maritalStatus,
       'profession': profession,
       'photo': photo,
@@ -50,9 +53,10 @@ class PersonModel {
       gender: map['gender'] ?? 'Unknown',
       dob: map['dob'] ?? 'Unknown',
       birthPlace: map['birthPlace'] ?? 'Unknown',
-      country: map['country'] ?? 'Unknown',
-      pincode: map['pincode'] ?? 'Unknown',
-      nationality: map['nationality'] ?? 'Unknown',
+      presentAddress: map['presentAddress'] ?? 'Unknown',
+      presentPincode: map['presentPincode'] ?? 'Unknown',
+      presentCountry: map['presentCountry'] ?? 'Unknown',
+      permanentAddress: map['permanentAddress'] ?? 'Unknown',
       maritalStatus: map['maritalStatus'] ?? 'Unknown',
       profession: map['profession'] ?? 'Unknown',
       photo: map['photo'] != null

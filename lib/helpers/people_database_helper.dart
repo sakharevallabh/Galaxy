@@ -29,18 +29,19 @@ class DatabaseHelper {
 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE person (
+      CREATE TABLE $tablePerson (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         gender TEXT,
         dob TEXT,
         birthPlace TEXT,
-        country TEXT,
-        pincode TEXT,
-        nationality TEXT,
+        presentAddress TEXT,
+        presentCountry TEXT,
+        presentPincode TEXT,
+        permanentAddress TEXT,
         maritalStatus TEXT,
-        photo BLOB,
-        profession TEXT
+        profession TEXT,
+        photo BLOB
       )
     ''');
   }

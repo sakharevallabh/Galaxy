@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:galaxy/helpers/people_database_helper.dart';
@@ -26,11 +25,13 @@ class AddPersonViewState extends State<AddPersonView> {
   final List<String> _maritalStatuses = ['Married', 'Unmarried', 'Divorced'];
   final List<String> _gender = ['Male', 'Female'];
   List<String> _countries = [];
+  List<String> _professions = [];
 
   @override
   void initState() {
     super.initState();
     _fetchCountries();
+    _fetchProfessions();
   }
 
   // Controllers for form fields
@@ -39,9 +40,10 @@ class AddPersonViewState extends State<AddPersonView> {
     'Gender': TextEditingController(),
     'Date of Birth': TextEditingController(),
     'Birth Place': TextEditingController(),
-    'Country': TextEditingController(),
-    'Pincode': TextEditingController(),
-    'Nationality': TextEditingController(),
+    'Present Address': TextEditingController(),
+    'Present Pincode': TextEditingController(),
+    'Present Country': TextEditingController(),
+    'Permanent Address': TextEditingController(),
     'Marital Status': TextEditingController(),
     'Profession': TextEditingController(),
   };
@@ -75,9 +77,10 @@ class AddPersonViewState extends State<AddPersonView> {
     _controllers['Gender']!.text = "";
     _controllers['Date of Birth']!.text = "";
     _controllers['Birth Place']!.text = "";
-    _controllers['Country']!.text = "";
-    _controllers['Pincode']!.text = "";
-    _controllers['Nationality']!.text = "";
+    _controllers['Present Address']!.text = "";
+    _controllers['Present Pincode']!.text = "";
+    _controllers['Present Country']!.text = "";
+    _controllers['Permanent Address']!.text = "";
     _controllers['Marital Status']!.text = "";
     _controllers['Profession']!.text = "";
     setState(() {
@@ -98,9 +101,10 @@ class AddPersonViewState extends State<AddPersonView> {
         'gender': _controllers['Gender']!.text,
         'dob': _controllers['Date of Birth']!.text,
         'birthPlace': _controllers['Birth Place']!.text,
-        'country': _controllers['Country']!.text,
-        'pincode': _controllers['Pincode']!.text,
-        'nationality': _controllers['Nationality']!.text,
+        'presentAddress': _controllers['Present Address']!.text,
+        'presentPincode': _controllers['Present Pincode']!.text,
+        'presentCountry': _controllers['Present Country']!.text,
+        'permanentAddress': _controllers['Permanent Address']!.text,
         'maritalStatus': _controllers['Marital Status']!.text,
         'profession': _controllers['Profession']!.text,
         'photo': _photo,
@@ -116,15 +120,23 @@ class AddPersonViewState extends State<AddPersonView> {
   }
 
   Future<void> _fetchCountries() async {
-    final String response =
+    final String responseContries =
         await rootBundle.loadString('assets/data/countries.json');
-    final List<dynamic> data = jsonDecode(response);
-    _countries = data.map((country) => country.toString()).toList();
+    final List<dynamic> data = jsonDecode(responseContries);
+    _countries = data.map((countries) => countries.toString()).toList();
+  }
+
+  Future<void> _fetchProfessions() async {
+    final String responseProfessions =
+        await rootBundle.loadString('assets/data/professions.json');
+    final List<dynamic> data = jsonDecode(responseProfessions);
+    _professions = data.map((professions) => professions.toString()).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     _fetchCountries();
+    _fetchProfessions();
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -188,11 +200,21 @@ class AddPersonViewState extends State<AddPersonView> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _controllers['Birth Place']!,
-                decoration: const InputDecoration(labelText: 'Birth Place'),
+                decoration: const InputDecoration(labelText: 'Place of Birth'),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _controllers['Present Address']!,
+                decoration: const InputDecoration(labelText: 'Present Address'),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _controllers['Present Pincode']!,
+                decoration: const InputDecoration(labelText: 'Present Pincode'),
               ),
               const SizedBox(height: 10),
               SearchField(
-                controller: _controllers['Country']!,
+                controller: _controllers['Present Country']!,
                 searchInputDecoration: const InputDecoration(
                   labelText: 'Present Country',
                 ),
@@ -204,13 +226,8 @@ class AddPersonViewState extends State<AddPersonView> {
               ),
               const SizedBox(height: 10),
               TextFormField(
-                controller: _controllers['Pincode']!,
-                decoration: const InputDecoration(labelText: 'Pincode'),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _controllers['Nationality']!,
-                decoration: const InputDecoration(labelText: 'Nationality'),
+                controller: _controllers['Permanent Address']!,
+                decoration: const InputDecoration(labelText: 'Permanent Address'),
               ),
               const SizedBox(height: 10),
               SearchField(
@@ -225,26 +242,32 @@ class AddPersonViewState extends State<AddPersonView> {
                     .toList(),
               ),
               const SizedBox(height: 10),
-              TextFormField(
+              SearchField(
                 controller: _controllers['Profession']!,
-                decoration: const InputDecoration(labelText: 'Profession'),
+                searchInputDecoration: const InputDecoration(
+                  labelText: 'Profession',
+                ),
+                maxSuggestionsInViewPort: 5,
+                autoCorrect: true,
+                suggestions: _professions
+                    .map((e) => SearchFieldListItem(e, child: Text(e)))
+                    .toList(),
               ),
-              const SizedBox(height: 10),
-              // ElevatedButton(
-              //   onPressed: _pickImage,
-              //   child: const Text('Select Photo'),
-              // ),
-              // _image == null
-              //     ? const Text('No image selected.')
-              //     : Image.file(_image!),
-              // const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _saveForm,
-                child: const Text('Save'),
-              ),
+              const SizedBox(height: 100),
             ],
           ),
         ),
+      ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        verticalDirection: VerticalDirection.down,
+        children: [
+          FloatingActionButton(
+            onPressed: _saveForm,
+            tooltip: 'Save',
+            child: const Icon(Icons.save_rounded),
+          )
+        ],
       ),
     );
   }

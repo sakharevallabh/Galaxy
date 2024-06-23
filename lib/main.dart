@@ -25,7 +25,7 @@ Future main() async {
 class MyApp extends StatelessWidget {
   static const String title = "Galaxy Application";
 
-  const MyApp({super.key});
+  const MyApp({super.key});  
 
   @override
   Widget build(BuildContext context) => ChangeNotifierProvider(

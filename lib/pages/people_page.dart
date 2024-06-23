@@ -90,12 +90,6 @@ class PeoplePageState extends State<PeoplePage> {
           ),
         ],
       ),
-      // floatingActionButton: _selectedIndex == 1
-      //     ? FloatingActionButton(
-      //         onPressed: _navigateToAddPerson,
-      //         child: const Icon(Icons.add),
-      //       )
-      //     : null,
     );
   }
 }
