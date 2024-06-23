@@ -47,3 +47,6 @@ samples, guidance on mobile development, and a full API reference.
 ![image](https://github.com/sakharevallabh/Galaxy/assets/173373029/ce7cf4dc-24ce-4710-af5d-c16f1250e4b5)
 
 
+**Add new person**
+
+![image](https://github.com/sakharevallabh/Galaxy/assets/173373029/dfeff46f-3dab-43c5-a59c-a0e0810d6886)
