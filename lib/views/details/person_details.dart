@@ -43,6 +43,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       'Marital Status': TextEditingController(text: _person.maritalStatus),
       'Profession': TextEditingController(text: _person.profession),
     };
+    _photo = _person.photo;
   }
 
   @override
@@ -83,7 +84,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     }
   }
 
-    Future<void> _pickImage() async {
+  Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -182,7 +183,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
                         ? FileImage(File(_image!.path))
                         : widget.person.photo != null
                             ? MemoryImage(widget.person.photo!)
-                            : const AssetImage('assets/images/placeholder.png') as ImageProvider,
+                            : const AssetImage('assets/images/placeholder.png')
+                                as ImageProvider,
                   ),
                 ),
               ),
