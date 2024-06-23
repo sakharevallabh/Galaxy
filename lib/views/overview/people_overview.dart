@@ -30,6 +30,7 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
 
   @override
   Widget build(BuildContext context) {
+    _fetchPeople();
     return Scaffold(
       body: _buildPersonList(),
     );

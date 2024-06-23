@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:galaxy/model/person_model.dart';
 import 'package:galaxy/helpers/people_database_helper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
+import 'package:searchfield/searchfield.dart';
 import 'package:share/share.dart';
+import 'package:intl/intl.dart';
 
 class PersonDetailsPage extends StatefulWidget {
   final PersonModel person;
@@ -27,6 +28,12 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   XFile? _image;
   Uint8List? _photo;
   final logger = Logger();
+  DateTime? _dob;
+
+  final List<String> _genders = ['Male', 'Female'];
+  final List<String> _maritalStatuses = ['Married', 'Unmarried'];
+  final List<String> _countries = ['USA', 'Canada', 'India', 'Australia']; // Example countries
+  final List<String> _professions = ['Doctor', 'Engineer', 'Artist', 'Lawyer']; // Example professions
 
   @override
   void initState() {
@@ -35,17 +42,19 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     _controllers = {
       'Name': TextEditingController(text: _person.name),
       'Gender': TextEditingController(text: _person.gender),
-      'Date of Birth': TextEditingController(text: _person.dob),
+      'Date of Birth': TextEditingController(text: _person.dob ?? ''),
       'Birth Place': TextEditingController(text: _person.birthPlace),
       'Present Address': TextEditingController(text: _person.presentAddress),
       'Present Country': TextEditingController(text: _person.presentCountry),
       'Present Pincode': TextEditingController(text: _person.presentPincode),
-      'Permanent Address':
-          TextEditingController(text: _person.permanentAddress),
+      'Permanent Address': TextEditingController(text: _person.permanentAddress),
       'Marital Status': TextEditingController(text: _person.maritalStatus),
       'Profession': TextEditingController(text: _person.profession),
     };
     _photo = _person.photo;
+    if (_person.dob != null && _person.dob!.isNotEmpty) {
+      _dob = DateFormat('yyyy-MM-dd').parse(_person.dob!);
+    }
   }
 
   @override
@@ -93,7 +102,6 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     if (pickedFile != null) {
       pickedFile.readAsBytes().then((value) {
         setState(() {
-          //  _image = pickedFile;
           _image = pickedFile;
           _photo = value;
         });
@@ -144,6 +152,21 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     Share.share(selectedData);
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _dob ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _dob) {
+      setState(() {
+        _dob = picked;
+        _controllers['Date of Birth']!.text = DateFormat('yyyy-MM-dd').format(picked);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,14 +199,14 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               Hero(
                 tag: 'person_image_${widget.person.id}',
                 child: GestureDetector(
                   onTap: _pickImage,
                   child: CircleAvatar(
-                    radius: 50,
+                    radius: 100,
                     backgroundImage: _image != null
                         ? FileImage(File(_image!.path))
                         : widget.person.photo != null
@@ -198,21 +221,15 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
                 tag: widget.heroTag,
                 child: _buildEditableField('Name', _controllers['Name']!),
               ),
-              _buildEditableField('Gender', _controllers['Gender']!),
-              _buildEditableField(
-                  'Date of Birth', _controllers['Date of Birth']!),
+              _buildSearchableField('Gender', _controllers['Gender']!, _genders),
+              _buildDatePickerField('Date of Birth', _controllers['Date of Birth']!),
               _buildEditableField('Birth Place', _controllers['Birth Place']!),
-              _buildEditableField(
-                  'Present Address', _controllers['Present Address']!),
-              _buildEditableField(
-                  'Present Country', _controllers['Present Country']!),
-              _buildEditableField(
-                  'Present Pincode', _controllers['Present Pincode']!),
-              _buildEditableField(
-                  'Permanent Address', _controllers['Permanent Address']!),
-              _buildEditableField(
-                  'Marital Status', _controllers['Marital Status']!),
-              _buildEditableField('Profession', _controllers['Profession']!),
+              _buildEditableField('Present Address', _controllers['Present Address']!),
+              _buildSearchableField('Present Country', _controllers['Present Country']!, _countries),
+              _buildEditableField('Present Pincode', _controllers['Present Pincode']!),
+              _buildEditableField('Permanent Address', _controllers['Permanent Address']!),
+              _buildSearchableField('Marital Status', _controllers['Marital Status']!, _maritalStatuses),
+              _buildSearchableField('Profession', _controllers['Profession']!, _professions),
             ],
           ),
         ),
@@ -220,8 +237,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     );
   }
 
-  Widget _buildEditableField(
-      String fieldName, TextEditingController controller) {
+  Widget _buildEditableField(String fieldName, TextEditingController controller) {
     return GestureDetector(
       onTap: () => _toggleFieldSelection(fieldName),
       child: Container(
@@ -229,8 +245,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           border: Border.all(
-            color:
-                _selectedFields.contains(fieldName) ? Colors.blue : Colors.grey,
+            color: _selectedFields.contains(fieldName) ? Colors.blue : Colors.grey,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -250,14 +265,14 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
               onChanged: (value) {
                 setState(() {
                   switch (fieldName) {
-                    case 'First Name':
+                    case 'Name':
                       _person.name = value;
                       break;
                     case 'Gender':
                       _person.gender = value;
                       break;
                     case 'Date of Birth':
-                      _person.dob = value;
+                      _person.dob = value.isNotEmpty ? value : null;
                       break;
                     case 'Birth Place':
                       _person.birthPlace = value;
@@ -285,6 +300,94 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
                   }
                 });
               },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchableField(String fieldName, TextEditingController controller, List<String> suggestions) {
+    return GestureDetector(
+      onTap: () => _toggleFieldSelection(fieldName),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: _selectedFields.contains(fieldName) ? Colors.blue : Colors.grey,
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              fieldName,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SearchField(
+              controller: controller,
+              suggestions: suggestions.map((e) => SearchFieldListItem(e)).toList(),
+              searchInputDecoration: InputDecoration(
+                hintText: 'Enter $fieldName',
+              ),
+              maxSuggestionsInViewPort: 5,
+              onSearchTextChanged: (value) {
+                setState(() {
+                  switch (fieldName) {
+                    case 'Gender':
+                      _person.gender = value;
+                      break;
+                    case 'Present Country':
+                      _person.presentCountry = value;
+                      break;
+                    case 'Marital Status':
+                      _person.maritalStatus = value;
+                      break;
+                    case 'Profession':
+                      _person.profession = value;
+                      break;
+                    default:
+                      break;
+                  }
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDatePickerField(String fieldName, TextEditingController controller) {
+    return GestureDetector(
+      onTap: () => _toggleFieldSelection(fieldName),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: _selectedFields.contains(fieldName) ? Colors.blue : Colors.grey,
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              fieldName,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextFormField(
+              controller: controller,
+              readOnly: true,
+              decoration: InputDecoration(
+                hintText: 'Enter $fieldName',
+              ),
+              onTap: () => _selectDate(context),
             ),
           ],
         ),
