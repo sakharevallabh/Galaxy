@@ -30,8 +30,9 @@ class AddPersonViewState extends State<AddPersonView> {
   @override
   void initState() {
     super.initState();
-    _fetchCountries();
-    _fetchProfessions();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showMaterialBanner();
+    });
   }
 
   // Controllers for form fields
@@ -115,7 +116,7 @@ class AddPersonViewState extends State<AddPersonView> {
       if (widget.onPersonAdded != null) {
         widget.onPersonAdded!();
       }
-      _clearForm();
+      // _clearForm();
     }
   }
 
@@ -131,6 +132,22 @@ class AddPersonViewState extends State<AddPersonView> {
         await rootBundle.loadString('assets/data/professions.json');
     final List<dynamic> data = jsonDecode(responseProfessions);
     _professions = data.map((professions) => professions.toString()).toList();
+  }
+
+  void _showMaterialBanner() {
+    ScaffoldMessenger.of(context).showMaterialBanner(MaterialBanner(
+        padding: const EdgeInsets.all(16),
+        leading: const Icon(Icons.info, color: Colors.black, size: 32),
+        backgroundColor: Colors.white,
+        content: const Text(
+            'All details are stored on your phone or cloud of your choice and not on our servers.'),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () =>
+                ScaffoldMessenger.of(context).hideCurrentMaterialBanner(),
+          )
+        ]));
   }
 
   @override
@@ -227,7 +244,8 @@ class AddPersonViewState extends State<AddPersonView> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _controllers['Permanent Address']!,
-                decoration: const InputDecoration(labelText: 'Permanent Address'),
+                decoration:
+                    const InputDecoration(labelText: 'Permanent Address'),
               ),
               const SizedBox(height: 10),
               SearchField(
@@ -263,7 +281,9 @@ class AddPersonViewState extends State<AddPersonView> {
         verticalDirection: VerticalDirection.down,
         children: [
           FloatingActionButton(
-            onPressed: _saveForm,
+            onPressed: () {
+              _saveForm();
+            },
             tooltip: 'Save',
             child: const Icon(Icons.save_rounded),
           )

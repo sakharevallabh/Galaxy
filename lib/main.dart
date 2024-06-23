@@ -86,8 +86,9 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
+              const SizedBox(height: 20),
               SizedBox(
-                height: 200,
+                height: 150,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -178,7 +179,7 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         },
         child: Container(
-          width: 200,
+          width: 300,
           padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

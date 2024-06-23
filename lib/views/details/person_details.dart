@@ -1,6 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:galaxy/model/person_model.dart';
 import 'package:galaxy/helpers/people_database_helper.dart';
 import 'package:image_picker/image_picker.dart';
@@ -31,9 +32,9 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   DateTime? _dob;
 
   final List<String> _genders = ['Male', 'Female'];
-  final List<String> _maritalStatuses = ['Married', 'Unmarried'];
-  final List<String> _countries = ['USA', 'Canada', 'India', 'Australia']; // Example countries
-  final List<String> _professions = ['Doctor', 'Engineer', 'Artist', 'Lawyer']; // Example professions
+  final List<String> _maritalStatuses = ['Married', 'Unmarried', 'Divorced'];
+  List<String> _countries = [];
+  List<String> _professions = [];
 
   @override
   void initState() {
@@ -47,7 +48,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       'Present Address': TextEditingController(text: _person.presentAddress),
       'Present Country': TextEditingController(text: _person.presentCountry),
       'Present Pincode': TextEditingController(text: _person.presentPincode),
-      'Permanent Address': TextEditingController(text: _person.permanentAddress),
+      'Permanent Address':
+          TextEditingController(text: _person.permanentAddress),
       'Marital Status': TextEditingController(text: _person.maritalStatus),
       'Profession': TextEditingController(text: _person.profession),
     };
@@ -55,6 +57,10 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     if (_person.dob != null && _person.dob!.isNotEmpty) {
       _dob = DateFormat('yyyy-MM-dd').parse(_person.dob!);
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showMaterialBanner();
+    });
   }
 
   @override
@@ -162,13 +168,46 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     if (picked != null && picked != _dob) {
       setState(() {
         _dob = picked;
-        _controllers['Date of Birth']!.text = DateFormat('yyyy-MM-dd').format(picked);
+        _controllers['Date of Birth']!.text =
+            DateFormat('yyyy-MM-dd').format(picked);
       });
     }
   }
 
+  Future<void> _fetchCountries() async {
+    final String responseContries =
+        await rootBundle.loadString('assets/data/countries.json');
+    final List<dynamic> data = jsonDecode(responseContries);
+    _countries = data.map((countries) => countries.toString()).toList();
+  }
+
+  Future<void> _fetchProfessions() async {
+    final String responseProfessions =
+        await rootBundle.loadString('assets/data/professions.json');
+    final List<dynamic> data = jsonDecode(responseProfessions);
+    _professions = data.map((professions) => professions.toString()).toList();
+  }
+
+  void _showMaterialBanner() {
+    ScaffoldMessenger.of(context).showMaterialBanner(MaterialBanner(
+        padding: const EdgeInsets.all(16),
+        leading: const Icon(Icons.info, color: Colors.black, size: 32),
+        backgroundColor: Colors.white,
+        content: const Text(
+            'All details are stored on your phone or cloud of your choice and not on our servers.'),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () =>
+                ScaffoldMessenger.of(context).hideCurrentMaterialBanner(),
+          )
+        ]));
+  }
+
   @override
   Widget build(BuildContext context) {
+    _fetchCountries();
+    _fetchProfessions();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Person Details'),
@@ -221,15 +260,24 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
                 tag: widget.heroTag,
                 child: _buildEditableField('Name', _controllers['Name']!),
               ),
-              _buildSearchableField('Gender', _controllers['Gender']!, _genders),
-              _buildDatePickerField('Date of Birth', _controllers['Date of Birth']!),
+              _buildSearchableField(
+                  'Gender', _controllers['Gender']!, _genders),
+              _buildDatePickerField(
+                  'Date of Birth', _controllers['Date of Birth']!),
               _buildEditableField('Birth Place', _controllers['Birth Place']!),
-              _buildEditableField('Present Address', _controllers['Present Address']!),
-              _buildSearchableField('Present Country', _controllers['Present Country']!, _countries),
-              _buildEditableField('Present Pincode', _controllers['Present Pincode']!),
-              _buildEditableField('Permanent Address', _controllers['Permanent Address']!),
-              _buildSearchableField('Marital Status', _controllers['Marital Status']!, _maritalStatuses),
-              _buildSearchableField('Profession', _controllers['Profession']!, _professions),
+              _buildEditableField(
+                  'Present Address', _controllers['Present Address']!),
+              _buildSearchableField('Present Country',
+                  _controllers['Present Country']!, _countries),
+              _buildEditableField(
+                  'Present Pincode', _controllers['Present Pincode']!),
+              _buildEditableField(
+                  'Permanent Address', _controllers['Permanent Address']!),
+              _buildSearchableField('Marital Status',
+                  _controllers['Marital Status']!, _maritalStatuses),
+              _buildSearchableField(
+                  'Profession', _controllers['Profession']!, _professions),
+              const SizedBox(height: 100),
             ],
           ),
         ),
@@ -237,7 +285,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     );
   }
 
-  Widget _buildEditableField(String fieldName, TextEditingController controller) {
+  Widget _buildEditableField(
+      String fieldName, TextEditingController controller) {
     return GestureDetector(
       onTap: () => _toggleFieldSelection(fieldName),
       child: Container(
@@ -245,7 +294,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           border: Border.all(
-            color: _selectedFields.contains(fieldName) ? Colors.blue : Colors.grey,
+            color:
+                _selectedFields.contains(fieldName) ? Colors.blue : Colors.grey,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -307,7 +357,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     );
   }
 
-  Widget _buildSearchableField(String fieldName, TextEditingController controller, List<String> suggestions) {
+  Widget _buildSearchableField(String fieldName,
+      TextEditingController controller, List<String> suggestions) {
     return GestureDetector(
       onTap: () => _toggleFieldSelection(fieldName),
       child: Container(
@@ -315,7 +366,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           border: Border.all(
-            color: _selectedFields.contains(fieldName) ? Colors.blue : Colors.grey,
+            color:
+                _selectedFields.contains(fieldName) ? Colors.blue : Colors.grey,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -329,7 +381,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
             ),
             SearchField(
               controller: controller,
-              suggestions: suggestions.map((e) => SearchFieldListItem(e)).toList(),
+              suggestions:
+                  suggestions.map((e) => SearchFieldListItem(e)).toList(),
               searchInputDecoration: InputDecoration(
                 hintText: 'Enter $fieldName',
               ),
@@ -361,7 +414,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     );
   }
 
-  Widget _buildDatePickerField(String fieldName, TextEditingController controller) {
+  Widget _buildDatePickerField(
+      String fieldName, TextEditingController controller) {
     return GestureDetector(
       onTap: () => _toggleFieldSelection(fieldName),
       child: Container(
@@ -369,7 +423,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           border: Border.all(
-            color: _selectedFields.contains(fieldName) ? Colors.blue : Colors.grey,
+            color:
+                _selectedFields.contains(fieldName) ? Colors.blue : Colors.grey,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(8),
