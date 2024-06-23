@@ -12,7 +12,6 @@ class PersonModel {
   late final String? maritalStatus;
   late final String? profession;
   late final Uint8List? photo;
-  late final String? additionalFields;
 
   PersonModel({
     this.id,
@@ -26,7 +25,6 @@ class PersonModel {
     this.maritalStatus,
     this.profession,
     this.photo,
-    this.additionalFields,
   });
 
   Map<String, dynamic> toMap() {
@@ -42,7 +40,6 @@ class PersonModel {
       'maritalStatus': maritalStatus,
       'profession': profession,
       'photo': photo,
-      'additionalFields': additionalFields,
     };
   }
 
@@ -57,9 +54,10 @@ class PersonModel {
       pincode: map['pincode'] ?? 'Unknown',
       nationality: map['nationality'] ?? 'Unknown',
       maritalStatus: map['maritalStatus'] ?? 'Unknown',
-      photo: map['photo'] != null ? Uint8List.fromList(map['photo'].cast<int>()) : null,
       profession: map['profession'] ?? 'Unknown',
-      additionalFields: map['additionalFields'] ?? 'Unknown',
+      photo: map['photo'] != null
+          ? Uint8List.fromList(map['photo'].cast<int>())
+          : null,
     );
   }
 }

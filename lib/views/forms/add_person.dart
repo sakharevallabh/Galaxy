@@ -1,9 +1,9 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:galaxy/helpers/people_database_helper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
+import 'package:searchfield/searchfield.dart';
 
 class AddPersonView extends StatefulWidget {
   final Function()? onPersonAdded;
@@ -17,125 +17,142 @@ class AddPersonView extends StatefulWidget {
 class AddPersonViewState extends State<AddPersonView> {
   final _formKey = GlobalKey<FormState>();
   final logger = Logger();
-  File? _image;
+  XFile? _image;
+  Uint8List? _photo;
   final Map<String, dynamic> _formData = {};
+  final List<String> _maritalStatuses = ['Married', 'Unmarried', 'Divorced'];
+  final List<String> _gender = ['Male', 'Female'];
 
   // Controllers for form fields
-  final _nameController = TextEditingController();
-  final _genderController = TextEditingController();
-  final _dobController = TextEditingController();
-  final _birthPlaceController = TextEditingController();
-  final _countryController = TextEditingController();
-  final _pincodeController = TextEditingController();
-  final _nationalityController = TextEditingController();
-  final _maritalStatusController = TextEditingController();
-  final _professionController = TextEditingController();
-  Uint8List? _photo;
-  final List<Map<String, TextEditingController>> _additionalFields = [];
+  late final Map<String, TextEditingController> _controllers = {
+    'Name': TextEditingController(),
+    'Gender': TextEditingController(),
+    'Date of Birth': TextEditingController(),
+    'Birth Place': TextEditingController(),
+    'Country': TextEditingController(),
+    'Pincode': TextEditingController(),
+    'Nationality': TextEditingController(),
+    'Marital Status': TextEditingController(),
+    'Profession': TextEditingController(),
+  };
+
+  
 
   final DatabaseHelper _databaseHelper = DatabaseHelper();
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _genderController.dispose();
-    _dobController.dispose();
-    _birthPlaceController.dispose();
-    _countryController.dispose();
-    _pincodeController.dispose();
-    _nationalityController.dispose();
-    _maritalStatusController.dispose();
-    _professionController.dispose();
-    for (var field in _additionalFields) {
-      field['name']?.dispose();
-      field['value']?.dispose();
-    }
-    super.dispose();
-  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-    pickedFile.readAsBytes().then((value) {
-    setState(() {
-      _image = File(pickedFile.path);
-      _photo = value;
-    });
-    }).catchError((error) {
+      pickedFile.readAsBytes().then((value) {
+        setState(() {
+          //  _image = pickedFile;
+          _image = pickedFile;
+          _photo = value;
+        });
+      }).catchError((error) {
         logger.d('Error reading image: $error');
       });
     }
   }
 
   void _showSnackBar(String message) {
-  if (mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
   }
-}
+
+  void _clearForm() {
+     _controllers['Name']!.text = "";
+      _controllers['Gender']!.text = "";
+      _controllers['Date of Birth']!.text = "";
+      _controllers['Birth Place']!.text = "";
+      _controllers['Country']!.text = "";
+      _controllers['Pincode']!.text = "";
+      _controllers['Nationality']!.text = "";
+      _controllers['Marital Status']!.text = "";
+      _controllers['Profession']!.text = "";
+      setState(() {
+        _image = null;
+        _photo = null;
+      _photo!.clear();
+      });
+  }
 
   Future<void> _saveForm() async {
     if (_formKey.currentState!.validate()) {
-       _formKey.currentState!.save();
+      _formKey.currentState!.save();
       if (_image != null) {
         _formData['photo'] = _image!.path;
       }
-      final userId = await _databaseHelper.insertPerson({
-        'name': _nameController.text,
-        'gender': _genderController.text,
-        'dob': _dobController.text,
-        'birthPlace': _birthPlaceController.text,
-        'country': _countryController.text,
-        'pincode': _pincodeController.text,
-        'nationality': _nationalityController.text,
-        'maritalStatus': _maritalStatusController.text,
+      await _databaseHelper.insertPerson({
+        'name': _controllers['Name']!.text,
+        'gender': _controllers['Gender']!.text,
+        'dob': _controllers['Date of Birth']!.text,
+        'birthPlace': _controllers['Birth Place']!.text,
+        'country': _controllers['Country']!.text,
+        'pincode': _controllers['Pincode']!.text,
+        'nationality': _controllers['Nationality']!.text,
+        'maritalStatus': _controllers['Marital Status']!.text,
+        'profession': _controllers['Profession']!.text,
         'photo': _photo,
-        'profession': _professionController.text,
       });
 
-      for (var field in _additionalFields) {
-        await _databaseHelper.insertAdditionalField({
-          'userId': userId,
-          'fieldName': field['name']?.text,
-          'fieldValue': field['value']?.text,
-        });
-      }
-
-      // Show a confirmation dialog or navigate to another page
       _showSnackBar('Person added successfully!');
-       if (widget.onPersonAdded != null) {
+
+      if (widget.onPersonAdded != null) {
         widget.onPersonAdded!();
       }
-    }   
+      _clearForm();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: Column(
+          child: ListView(
             children: [
+              GestureDetector(
+                onTap: _pickImage,
+                child: CircleAvatar(
+                  radius: 100,
+                  backgroundImage: _image != null
+                      ? MemoryImage(_photo!)
+                      : const AssetImage('assets/images/placeholder.png') as ImageProvider,
+                ),
+              ),
+              const SizedBox(height: 10),
               TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'First Name'),
+                controller: _controllers['Name']!,
+                decoration: const InputDecoration(labelText: 'Name'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter first name';
+                    return 'Please enter name of the person';
                   }
                   return null;
                 },
               ),
-              TextFormField(
-                controller: _genderController,
-                decoration: const InputDecoration(labelText: 'Gender'),
+              const SizedBox(height: 10),
+              SearchField(
+                controller: _controllers['Gender']!,
+                searchInputDecoration: const InputDecoration(
+                  labelText: 'Gender',
+                ),
+                maxSuggestionsInViewPort: 5,
+                autoCorrect: true,
+                suggestions: _gender
+                    .map((e) => SearchFieldListItem(e, child: Text(e)))
+                    .toList(),
               ),
+              const SizedBox(height: 10),
               TextFormField(
-                controller: _dobController,
+                controller: _controllers['Date of Birth']!,
                 decoration: const InputDecoration(labelText: 'Date of Birth'),
                 onTap: () async {
                   FocusScope.of(context).requestFocus(FocusNode());
@@ -147,75 +164,58 @@ class AddPersonViewState extends State<AddPersonView> {
                   );
                   if (pickedDate != null) {
                     setState(() {
-                      _dobController.text =
+                      _controllers['Date of Birth']!.text =
                           "${pickedDate.year}-${pickedDate.month}-${pickedDate.day}";
                     });
                   }
                 },
               ),
+              const SizedBox(height: 10),
               TextFormField(
-                controller: _birthPlaceController,
+                controller: _controllers['Birth Place']!,
                 decoration: const InputDecoration(labelText: 'Birth Place'),
               ),
+              const SizedBox(height: 10),
               TextFormField(
-                controller: _countryController,
+                controller: _controllers['Country']!,
                 decoration: const InputDecoration(labelText: 'Country'),
               ),
+              const SizedBox(height: 10),
               TextFormField(
-                controller: _pincodeController,
+                controller: _controllers['Pincode']!,
                 decoration: const InputDecoration(labelText: 'Pincode'),
               ),
+              const SizedBox(height: 10),
               TextFormField(
-                controller: _nationalityController,
+                controller: _controllers['Nationality']!,
                 decoration: const InputDecoration(labelText: 'Nationality'),
               ),
-              TextFormField(
-                controller: _maritalStatusController,
-                decoration: const InputDecoration(labelText: 'Marital Status'),
+              const SizedBox(height: 10),
+              SearchField(
+                controller: _controllers['Marital Status']!,
+                searchInputDecoration: const InputDecoration(
+                  labelText: 'Marital Status',
+                ),
+                maxSuggestionsInViewPort: 5,
+                autoCorrect: true,
+                suggestions: _maritalStatuses
+                    .map((e) => SearchFieldListItem(e, child: Text(e)))
+                    .toList(),
               ),
+              const SizedBox(height: 10),
               TextFormField(
-                controller: _professionController,
+                controller: _controllers['Profession']!,
                 decoration: const InputDecoration(labelText: 'Profession'),
               ),
               const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _pickImage,
-                child: const Text('Select Photo'),
-              ),
-               _image == null
-                ? const Text('No image selected.')
-                : Image.file(_image!),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _additionalFields.add({
-                      'name': TextEditingController(),
-                      'value': TextEditingController(),
-                    });
-                  });
-                },
-                child: const Text('Add Additional Field'),
-              ),
-              ..._additionalFields.map((field) {
-                return Column(
-                  children: [
-                    TextFormField(
-                      controller: field['name'],
-                      decoration: const InputDecoration(
-                        labelText: 'Field Name',
-                      ),
-                    ),
-                    TextFormField(
-                      controller: field['value'],
-                      decoration: const InputDecoration(
-                        labelText: 'Field Value',
-                      ),
-                    ),
-                  ],
-                );
-              }),
-              const SizedBox(height: 20),
+              // ElevatedButton(
+              //   onPressed: _pickImage,
+              //   child: const Text('Select Photo'),
+              // ),
+              // _image == null
+              //     ? const Text('No image selected.')
+              //     : Image.file(_image!),
+              // const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _saveForm,
                 child: const Text('Save'),
@@ -225,34 +225,5 @@ class AddPersonViewState extends State<AddPersonView> {
         ),
       ),
     );
-  }
-
-  List<Widget> _buildDynamicFields(
-    BuildContext context,
-    String label,
-    List<TextEditingController> controllers,
-  ) {
-    return [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              setState(() {
-                controllers.add(TextEditingController());
-              });
-            },
-          ),
-        ],
-      ),
-      ...controllers.map((controller) {
-        return TextFormField(
-          controller: controller,
-          decoration: InputDecoration(labelText: label),
-        );
-      }),
-    ];
   }
 }

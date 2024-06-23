@@ -40,8 +40,7 @@ class DatabaseHelper {
         nationality TEXT,
         maritalStatus TEXT,
         photo BLOB,
-        profession TEXT,
-        additional_fields TEXT
+        profession TEXT
       )
     ''');
   }
@@ -51,36 +50,6 @@ class DatabaseHelper {
     return await db.insert(tablePerson, row);
   }
 
-  Future<int> insertAddress(Map<String, dynamic> row) async {
-    Database db = await database;
-    return await db.insert('address', row);
-  }
-
-  Future<int> insertPhoneNumber(Map<String, dynamic> row) async {
-    Database db = await database;
-    return await db.insert('phone_number', row);
-  }
-
-  Future<int> insertEmailAddress(Map<String, dynamic> row) async {
-    Database db = await database;
-    return await db.insert('email_address', row);
-  }
-
-  Future<int> insertSocialMediaProfile(Map<String, dynamic> row) async {
-    Database db = await database;
-    return await db.insert('social_media_profile', row);
-  }
-
-  Future<int> insertAdditionalField(Map<String, dynamic> row) async {
-    Database db = await database;
-    return await db.insert('additional_field', row);
-  }
-
-  // Future<List<Map<String, dynamic>>> getPerson() async {
-  //   Database db = await database;
-  //   return await db.query(tablePerson);
-  // }
-
   Future<List<PersonModel>> getPerson() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(tablePerson);
@@ -89,15 +58,7 @@ class DatabaseHelper {
     });
   }
 
-  // Future<int> updatePerson(PersonModel person) async {
-  //   // Future<int> updatePerson(int id, Map<String, dynamic> row) async {
-  //   Database db = await database;
-  //   // return await db.update(tablePerson, row, where: 'id = ?', whereArgs: [id]);
-  //   return await db.update(tablePerson, person.toMap(),
-  //       where: "id = ?", whereArgs: [person.id]);
-  // }
-
-    Future<void> updatePerson(PersonModel person) async {
+  Future<void> updatePerson(PersonModel person) async {
     final db = await database;
     await db.update(
       tablePerson,

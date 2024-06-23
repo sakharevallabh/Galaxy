@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:galaxy/pages/accounts_page.dart';
+import 'package:galaxy/pages/documents_page.dart';
 import 'package:galaxy/pages/people_page.dart';
 import 'package:galaxy/provider/navigation_provider.dart';
 import 'package:galaxy/widget/navigation_drawer_widget.dart';
 import 'package:provider/provider.dart';
-
-// void main() {
-//   WidgetsFlutterBinding.ensureInitialized();
-//   runApp(const My App());
-// }
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +29,7 @@ class MyApp extends StatelessWidget {
         child: MaterialApp(
           title: title.toString(),
           theme: ThemeData(
-            // colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
             useMaterial3: true,
           ),
           home: const MyHomePage(title: 'Galaxy View'),
@@ -87,10 +84,10 @@ class _MyHomePageState extends State<MyHomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               _buildCard(context, 'People', Icons.people, const PeoplePage()),
-              _buildCard(context, 'Vehicles', Icons.directions_car,
-                  null), // Replace with actual page
+              _buildCard(context, 'Documents', Icons.account_balance,
+                  const DocumentsPage()),
               _buildCard(context, 'Accounts', Icons.account_balance,
-                  null), // Replace with actual page
+                  const AccountsPage()),
               const Text(
                 'You have added this many number of items:',
                 style: TextStyle(

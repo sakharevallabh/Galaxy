@@ -1,6 +1,11 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:galaxy/model/person_model.dart';
 import 'package:galaxy/helpers/people_database_helper.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:logger/logger.dart';
 import 'package:share/share.dart';
 
 class PersonDetailsPage extends StatefulWidget {
@@ -19,6 +24,9 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   final DatabaseHelper _databaseHelper = DatabaseHelper();
   final List<String> _selectedFields = [];
   late Map<String, TextEditingController> _controllers;
+  XFile? _image;
+  Uint8List? _photo;
+  final logger = Logger();
 
   @override
   void initState() {
@@ -34,8 +42,6 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       'Nationality': TextEditingController(text: _person.nationality),
       'Marital Status': TextEditingController(text: _person.maritalStatus),
       'Profession': TextEditingController(text: _person.profession),
-      'Additional Fields':
-          TextEditingController(text: _person.additionalFields),
     };
   }
 
@@ -48,8 +54,9 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   }
 
   Future<void> _updatePerson() async {
-    // Synchronize controllers' values with the person object
     PersonModel personUpdated = PersonModel(
+      id: _person.id,
+      photo: _photo,
       name: _controllers['Name']!.text,
       gender: _controllers['Gender']!.text,
       dob: _controllers['Date of Birth']!.text,
@@ -59,14 +66,13 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       nationality: _controllers['Nationality']!.text,
       maritalStatus: _controllers['Marital Status']!.text,
       profession: _controllers['Profession']!.text,
-      additionalFields: _controllers['Additional Fields']!.text,
     );
     await _databaseHelper.updatePerson(personUpdated);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Details updated successfully!')),
       );
-      Navigator.pop(context, true); // Indicate that an update has occurred
+      // Navigator.pop(context, true); // Indicate that an update has occurred
     }
   }
 
@@ -74,6 +80,22 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     await _databaseHelper.deletePerson(_person.id!);
     if (mounted) {
       Navigator.pop(context, true);
+    }
+  }
+
+    Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      pickedFile.readAsBytes().then((value) {
+        setState(() {
+          //  _image = pickedFile;
+          _image = pickedFile;
+          _photo = value;
+        });
+      }).catchError((error) {
+        logger.d('Error reading image: $error');
+      });
     }
   }
 
@@ -108,8 +130,6 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
           return 'Marital Status: ${_person.maritalStatus}';
         case 'Profession':
           return 'Profession: ${_person.profession}';
-        case 'Additional Fields':
-          return 'Additional Fields: ${_person.additionalFields}';
         default:
           return '';
       }
@@ -152,11 +172,20 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              if (_person.photo != null)
-                CircleAvatar(
-                  backgroundImage: MemoryImage(_person.photo!),
-                  radius: 50,
+              Hero(
+                tag: 'person_image_${widget.person.id}',
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundImage: _image != null
+                        ? FileImage(File(_image!.path))
+                        : widget.person.photo != null
+                            ? MemoryImage(widget.person.photo!)
+                            : const AssetImage('assets/images/placeholder.png') as ImageProvider,
+                  ),
                 ),
+              ),
               const SizedBox(height: 16),
               Hero(
                 tag: widget.heroTag,
@@ -172,8 +201,6 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
               _buildEditableField(
                   'Marital Status', _controllers['Marital Status']!),
               _buildEditableField('Profession', _controllers['Profession']!),
-              _buildEditableField(
-                  'Additional Fields', _controllers['Additional Fields']!),
             ],
           ),
         ),
@@ -237,9 +264,6 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
                       break;
                     case 'Profession':
                       _person.profession = value;
-                      break;
-                    case 'Additional Fields':
-                      _person.additionalFields = value;
                       break;
                     default:
                       break;

@@ -15,18 +15,18 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
  List<PersonModel> _personList = [];
  DatabaseHelper databaseHelper = DatabaseHelper();
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _fetchPeople();
-  // }
+  @override
+  void initState() {
+    super.initState();
+    _fetchPeople();
+  }
 
-  //   Future<void> _fetchPeople() async {
-  //   List<PersonModel> fetchedUsers = await databaseHelper.getPerson();
-  //     setState(() {
-  //       _personList = fetchedUsers;
-  //     });
-  // }
+    Future<void> _fetchPeople() async {
+    List<PersonModel> fetchedUsers = await databaseHelper.getPerson();
+      setState(() {
+        _personList = fetchedUsers;
+      });
+  }
 
   @override
   Widget build(BuildContext context) {
