@@ -140,10 +140,10 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
           return 'Birth Place: ${_person.birthPlace}';
         case 'Present Address':
           return 'Present Address: ${_person.presentAddress}';
-        case 'Country':
-          return 'Country: ${_person.presentCountry}';
-        case 'Pincode':
-          return 'Pincode: ${_person.presentPincode}';
+        case 'Present Pincode':
+          return 'Present Pincode: ${_person.presentPincode}';
+        case 'PResent Country':
+          return 'Present Country: ${_person.presentCountry}';
         case 'Permanent Address':
           return 'Permanent Address: ${_person.permanentAddress}';
         case 'Marital Status':
