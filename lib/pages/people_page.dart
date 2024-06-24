@@ -20,10 +20,10 @@ class PeoplePageState extends State<PeoplePage> {
   @override
   void initState() {
     super.initState();
-    _fetchPeople();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _showMaterialBanner();
     });
+    _fetchPeople();
   }
 
   void _onItemTapped(int index) {
