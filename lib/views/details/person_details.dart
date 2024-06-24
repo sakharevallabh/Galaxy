@@ -39,6 +39,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   @override
   void initState() {
     super.initState();
+    _fetchCountries();
+    _fetchProfessions();
     _person = widget.person;
     _controllers = {
       'Name': TextEditingController(text: _person.name),
@@ -59,16 +61,15 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       _dob = DateFormat('yyyy-MM-dd').parse(_person.dob!);
       _controllers['Age']!.text = _calculateAge(_dob!).toString();
     }
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showMaterialBanner();
-    });
   }
 
   @override
   void dispose() {
     _controllers.forEach((key, controller) {
       controller.dispose();
+    });
+    setState(() {
+      Navigator.pop(context);
     });
     super.dispose();
   }
@@ -182,37 +183,29 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   Future<void> _fetchCountries() async {
     final String responseContries =
         await rootBundle.loadString('assets/data/countries.json');
-    final List<dynamic> data = jsonDecode(responseContries);
-    _countries = data.map((countries) => countries.toString()).toList();
+    await Future.delayed(const Duration(seconds: 1));
+
+    setState(() {
+      final List<dynamic> data = jsonDecode(responseContries);
+      _countries = data.map((countries) => countries.toString()).toList();
+    });
   }
 
   Future<void> _fetchProfessions() async {
     final String responseProfessions =
         await rootBundle.loadString('assets/data/professions.json');
-    final List<dynamic> data = jsonDecode(responseProfessions);
-    _professions = data.map((professions) => professions.toString()).toList();
-  }
-
-  void _showMaterialBanner() {
-    ScaffoldMessenger.of(context).showMaterialBanner(MaterialBanner(
-        padding: const EdgeInsets.all(16),
-        leading: const Icon(Icons.info, color: Colors.black, size: 32),
-        backgroundColor: Colors.white,
-        content: const Text(
-            'All details are stored on your phone or cloud of your choice and not on our servers.'),
-        actions: <Widget>[
-          TextButton(
-            child: const Text('OK'),
-            onPressed: () =>
-                ScaffoldMessenger.of(context).hideCurrentMaterialBanner(),
-          )
-        ]));
+    await Future.delayed(const Duration(seconds: 1));
+    setState(() {
+      final List<dynamic> data = jsonDecode(responseProfessions);
+      _professions = data.map((professions) => professions.toString()).toList();
+    });
   }
 
   int _calculateAge(DateTime dob) {
     final now = DateTime.now();
     int age = now.year - dob.year;
-    if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+    if (now.month < dob.month ||
+        (now.month == dob.month && now.day < dob.day)) {
       age--;
     }
     return age;
@@ -220,8 +213,6 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    _fetchCountries();
-    _fetchProfessions();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Person Details'),
@@ -422,6 +413,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
                       break;
                   }
                 });
+                return null;
               },
             ),
           ],
@@ -431,7 +423,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   }
 
   Widget _buildDatePickerField(
-    String fieldName, TextEditingController controller) {
+      String fieldName, TextEditingController controller) {
     return GestureDetector(
       onTap: () => _toggleFieldSelection(fieldName),
       child: Container(

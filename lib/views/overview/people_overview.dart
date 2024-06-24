@@ -44,34 +44,35 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
         child: Text('No persons available'),
       );
     } else {
-    return ListView.builder(
-      itemCount: _personList.length,
-      itemBuilder: (context, index) {
-        PersonModel person = _personList[index];
-        return Card(
-          child: ListTile(
-            leading: _buildAvatar(person),
-            title: Text(person.name),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PersonDetailsPage(
-                    person: person,
-                    heroTag: 'person_${person.name}',
+      return ListView.builder(
+        itemCount: _personList.length,
+        itemBuilder: (context, index) {
+          PersonModel person = _personList[index];
+          return Card(
+            child: ListTile(
+              leading: _buildAvatar(person),
+              title: Text(person.name),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PersonDetailsPage(
+                      person: person,
+                      heroTag: 'person_${person.name}',
+                    ),
                   ),
-                ),
-              ).then((value) {
-                // Trigger a refresh when coming back from details page
-                (context as Element).markNeedsBuild();
-              });
-            },
-          ),
-        );
-      },
-    );
+                ).then((value) {
+                  // Trigger a refresh when coming back from details page
+                  (context as Element).markNeedsBuild();
+                });
+              },
+            ),
+          );
+        },
+      );
+    }
   }
-}
+
   Widget _buildAvatar(PersonModel person) {
     return person.photo != null
         ? CircleAvatar(

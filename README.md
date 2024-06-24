@@ -19,7 +19,6 @@ samples, guidance on mobile development, and a full API reference.
 
 ![image](https://github.com/sakharevallabh/Galaxy/assets/173373029/bb11c701-5f34-43be-a8f3-53b1cdb6ddcd)
 
-
 **Short Navigation Drawer**
 
 ![image](https://github.com/sakharevallabh/Galaxy/assets/173373029/21a5712a-8a42-49ce-bb8d-d1dd6ef151bc)
@@ -45,7 +44,6 @@ samples, guidance on mobile development, and a full API reference.
 **Update Saved Person Details**
 
 ![image](https://github.com/sakharevallabh/Galaxy/assets/173373029/ce7cf4dc-24ce-4710-af5d-c16f1250e4b5)
-
 
 **Add new person**
 

@@ -21,6 +21,9 @@ class PeoplePageState extends State<PeoplePage> {
   void initState() {
     super.initState();
     _fetchPeople();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showMaterialBanner();
+    });
   }
 
   void _onItemTapped(int index) {
@@ -30,6 +33,35 @@ class PeoplePageState extends State<PeoplePage> {
     if (index == 0) {
       _fetchPeople();
     }
+  }
+
+  void _showMaterialBanner() {
+    ScaffoldMessenger.of(context).showMaterialBanner(MaterialBanner(
+        padding: const EdgeInsets.all(16),
+        leading: const Icon(Icons.info, color: Colors.black, size: 32),
+        backgroundColor: Colors.white,
+        content: const Text(
+            'All details are stored on your phone or cloud of your choice and not on our servers.'),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () =>
+                ScaffoldMessenger.of(context).hideCurrentMaterialBanner(),
+          )
+        ]));
+  }
+
+  void _clearMaterialBanner() {
+    ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+  }
+
+  @override
+  void dispose() {
+    _clearMaterialBanner();
+    setState(() {
+      Navigator.pop(context);
+    });
+    super.dispose();
   }
 
   Future<void> _fetchPeople() async {
@@ -54,42 +86,47 @@ class PeoplePageState extends State<PeoplePage> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('People'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: _SearchDelegate(_filterList, _personList),
-              );
-            },
-          ),
-        ],
-      ),
-      body: _selectedIndex == 0
-          ? PeopleOverview(personList: _personList)
-          : const AddPersonView(),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onItemTapped,
-        destinations: <NavigationDestination>[
-          NavigationDestination(
-            selectedIcon: const Icon(Icons.people),
-            icon: const Icon(Icons.people_alt_outlined),
-            label: 'All People (${_filteredPersonList.length})',
-          ),
-          const NavigationDestination(
-            selectedIcon: Icon(Icons.person_add_rounded),
-            icon: Icon(Icons.person_add_outlined),
-            label: 'Add New',
-          ),
-        ],
+    return PopScope(
+      onPopInvoked: (pop) {
+        _clearMaterialBanner();
+        pop;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('People'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                showSearch(
+                  context: context,
+                  delegate: _SearchDelegate(_filterList, _personList),
+                );
+              },
+            ),
+          ],
+        ),
+        body: _selectedIndex == 0
+            ? PeopleOverview(personList: _personList)
+            : const AddPersonView(),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: _onItemTapped,
+          destinations: <NavigationDestination>[
+            NavigationDestination(
+              selectedIcon: const Icon(Icons.people),
+              icon: const Icon(Icons.people_alt_outlined),
+              label: 'All People (${_filteredPersonList.length})',
+            ),
+            const NavigationDestination(
+              selectedIcon: Icon(Icons.person_add_rounded),
+              icon: Icon(Icons.person_add_outlined),
+              label: 'Add New',
+            ),
+          ],
+        ),
       ),
     );
   }

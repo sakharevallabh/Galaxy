@@ -25,7 +25,7 @@ Future main() async {
 class MyApp extends StatelessWidget {
   static const String title = "Galaxy Application";
 
-  const MyApp({super.key});  
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) => ChangeNotifierProvider(
@@ -93,14 +93,38 @@ class _MyHomePageState extends State<MyHomePage> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildCard(context, 'People', Icons.people, const PeoplePage(), Colors.amberAccent),
-                      _buildCard(context, 'Documents', Icons.picture_as_pdf, const DocumentsPage(), Colors.blueAccent),
-                      _buildCard(context, 'Accounts', Icons.account_balance, const AccountsPage(), Colors.redAccent),
-                      _buildCard(context, 'Vehicles', Icons.directions_car_rounded, const VehiclesPage(), Colors.purpleAccent),
-                      _buildCard(context, 'Assets', Icons.real_estate_agent, const AssetsPage(), Colors.greenAccent),
-                      _buildCard(context, 'Expenses', Icons.attach_money_rounded, const ExpensesPage(), Colors.pinkAccent),
-                      _buildCard(context, 'Achievements', Icons.workspace_premium_rounded, const AchivementsPage(), Colors.orangeAccent),
-                      _buildCard(context, 'My Universe', Icons.auto_awesome_sharp, const MyUniversePage(), Colors.indigoAccent),
+                      _buildCard(context, 'People', Icons.people,
+                          const PeoplePage(), Colors.amberAccent),
+                      _buildCard(context, 'Documents', Icons.picture_as_pdf,
+                          const DocumentsPage(), Colors.blueAccent),
+                      _buildCard(context, 'Accounts', Icons.account_balance,
+                          const AccountsPage(), Colors.redAccent),
+                      _buildCard(
+                          context,
+                          'Vehicles',
+                          Icons.directions_car_rounded,
+                          const VehiclesPage(),
+                          Colors.purpleAccent),
+                      _buildCard(context, 'Assets', Icons.real_estate_agent,
+                          const AssetsPage(), Colors.greenAccent),
+                      _buildCard(
+                          context,
+                          'Expenses',
+                          Icons.attach_money_rounded,
+                          const ExpensesPage(),
+                          Colors.pinkAccent),
+                      _buildCard(
+                          context,
+                          'Achievements',
+                          Icons.workspace_premium_rounded,
+                          const AchivementsPage(),
+                          Colors.orangeAccent),
+                      _buildCard(
+                          context,
+                          'My Universe',
+                          Icons.auto_awesome_sharp,
+                          const MyUniversePage(),
+                          Colors.indigoAccent),
                     ],
                   ),
                 ),
@@ -161,7 +185,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildCard(BuildContext context, String title, IconData icon, Widget? page, Color backColor) {
+  Widget _buildCard(BuildContext context, String title, IconData icon,
+      Widget? page, Color backColor) {
     return Card(
       elevation: 10,
       shape: RoundedRectangleBorder(

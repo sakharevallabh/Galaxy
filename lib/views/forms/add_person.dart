@@ -30,9 +30,8 @@ class AddPersonViewState extends State<AddPersonView> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showMaterialBanner();
-    });
+    _fetchCountries();
+    _fetchProfessions();
   }
 
   // Controllers for form fields
@@ -71,6 +70,18 @@ class AddPersonViewState extends State<AddPersonView> {
         SnackBar(content: Text(message)),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _clearForm();
+    _controllers.forEach((key, controller) {
+      controller.dispose();
+    });
+    setState(() {
+      Navigator.pop(context);
+    });
+    super.dispose();
   }
 
   void _clearForm() {
@@ -116,44 +127,33 @@ class AddPersonViewState extends State<AddPersonView> {
       if (widget.onPersonAdded != null) {
         widget.onPersonAdded!();
       }
-      // _clearForm();
+      _clearForm();
     }
   }
 
   Future<void> _fetchCountries() async {
     final String responseContries =
         await rootBundle.loadString('assets/data/countries.json');
-    final List<dynamic> data = jsonDecode(responseContries);
-    _countries = data.map((countries) => countries.toString()).toList();
+    await Future.delayed(const Duration(seconds: 1));
+
+    setState(() {
+      final List<dynamic> data = jsonDecode(responseContries);
+      _countries = data.map((countries) => countries.toString()).toList();
+    });
   }
 
   Future<void> _fetchProfessions() async {
     final String responseProfessions =
         await rootBundle.loadString('assets/data/professions.json');
-    final List<dynamic> data = jsonDecode(responseProfessions);
-    _professions = data.map((professions) => professions.toString()).toList();
-  }
-
-  void _showMaterialBanner() {
-    ScaffoldMessenger.of(context).showMaterialBanner(MaterialBanner(
-        padding: const EdgeInsets.all(16),
-        leading: const Icon(Icons.info, color: Colors.black, size: 32),
-        backgroundColor: Colors.white,
-        content: const Text(
-            'All details are stored on your phone or cloud of your choice and not on our servers.'),
-        actions: <Widget>[
-          TextButton(
-            child: const Text('OK'),
-            onPressed: () =>
-                ScaffoldMessenger.of(context).hideCurrentMaterialBanner(),
-          )
-        ]));
+    await Future.delayed(const Duration(seconds: 1));
+    setState(() {
+      final List<dynamic> data = jsonDecode(responseProfessions);
+      _professions = data.map((professions) => professions.toString()).toList();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    _fetchCountries();
-    _fetchProfessions();
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
