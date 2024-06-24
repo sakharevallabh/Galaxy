@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:galaxy/data/drawer_items.dart';
-import 'package:galaxy/main.dart';
 import 'package:galaxy/model/drawer_model.dart';
 import 'package:galaxy/pages/accounts_page.dart';
 import 'package:galaxy/pages/achivements_page.dart';
 import 'package:galaxy/pages/assets_page.dart';
 import 'package:galaxy/pages/documents_page.dart';
 import 'package:galaxy/pages/expenses_page.dart';
+import 'package:galaxy/pages/home_page.dart';
 import 'package:galaxy/pages/my_universe_page.dart';
 import 'package:galaxy/pages/people_page.dart';
 import 'package:galaxy/pages/profile_settings_page.dart';
