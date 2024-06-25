@@ -8,6 +8,7 @@ import 'package:galaxy/pages/my_universe_page.dart';
 import 'package:galaxy/pages/people_page.dart';
 import 'package:galaxy/pages/vehicles_page.dart';
 import 'package:galaxy/widget/navigation_drawer_widget.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -21,6 +22,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _addCounter = 0;
   int _shareCounter = 0;
+  final PageController _pageController = PageController();
 
   void _incrementAddCounter() {
     setState(() {
@@ -43,94 +45,69 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       drawer: const NavigationDrawerWidget(),
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/Background.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              const SizedBox(height: 20),
-              SizedBox(
-                height: 150,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildCard(context, 'People', Icons.people,
-                          const PeoplePage(), Colors.amberAccent),
-                      _buildCard(context, 'Documents', Icons.picture_as_pdf,
-                          const DocumentsPage(), Colors.blueAccent),
-                      _buildCard(context, 'Accounts', Icons.account_balance,
-                          const AccountsPage(), Colors.redAccent),
-                      _buildCard(
-                          context,
-                          'Vehicles',
-                          Icons.directions_car_rounded,
-                          const VehiclesPage(),
-                          Colors.purpleAccent),
-                      _buildCard(context, 'Assets', Icons.real_estate_agent,
-                          const AssetsPage(), Colors.greenAccent),
-                      _buildCard(
-                          context,
-                          'Expenses',
-                          Icons.attach_money_rounded,
-                          const ExpensesPage(),
-                          Colors.pinkAccent),
-                      _buildCard(
-                          context,
-                          'Achievements',
-                          Icons.workspace_premium_rounded,
-                          const AchivementsPage(),
-                          Colors.orangeAccent),
-                      _buildCard(
-                          context,
-                          'My Universe',
-                          Icons.auto_awesome_sharp,
-                          const MyUniversePage(),
-                          Colors.indigoAccent),
-                    ],
-                  ),
-                ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: <Widget>[
+            SizedBox(
+              height: 300, // Adjust height to prevent overflow
+              child: PageView(
+                controller: _pageController,
+                children: [
+                  _buildCard(context, 'People', Icons.people, const PeoplePage(), Colors.amberAccent),
+                  _buildCard(context, 'Documents', Icons.picture_as_pdf, const DocumentsPage(), Colors.blueAccent),
+                  _buildCard(context, 'Accounts', Icons.account_balance, const AccountsPage(), Colors.redAccent),
+                  _buildCard(context, 'Vehicles', Icons.directions_car_rounded, const VehiclesPage(), Colors.purpleAccent),
+                  _buildCard(context, 'Assets', Icons.real_estate_agent, const AssetsPage(), Colors.greenAccent),
+                  _buildCard(context, 'Expenses', Icons.attach_money_rounded, const ExpensesPage(), Colors.pinkAccent),
+                  _buildCard(context, 'Achievements', Icons.workspace_premium_rounded, const AchivementsPage(), Colors.orangeAccent),
+                  _buildCard(context, 'My Universe', Icons.auto_awesome_sharp, const MyUniversePage(), Colors.indigoAccent),
+                ],
               ),
-              const SizedBox(height: 20),
-              const Text(
-                'You have added this many number of items:',
-                style: TextStyle(
-                  color: Colors.white, // Change text color here
-                  fontSize: 16,
-                ),
+            ),
+            const SizedBox(height: 16),
+            SmoothPageIndicator(
+              controller: _pageController,
+              count: 8,
+              effect: const WormEffect(
+                dotColor: Colors.grey,
+                activeDotColor: Colors.black,
+                dotHeight: 10,
+                dotWidth: 10,
               ),
-              Text(
-                '$_addCounter',
-                style: const TextStyle(
-                  color: Colors.white, // Change text color here
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'You have added this many number of items:',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 16,
               ),
-              const SizedBox(height: 20),
-              const Text(
-                'You have shared this many number of items:',
-                style: TextStyle(
-                  color: Colors.white, // Change text color here
-                  fontSize: 16,
-                ),
+            ),
+            Text(
+              '$_addCounter',
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
               ),
-              Text(
-                '$_shareCounter',
-                style: const TextStyle(
-                  color: Colors.white, // Change text color here
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'You have shared this many number of items:',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 16,
               ),
-            ],
-          ),
+            ),
+            Text(
+              '$_shareCounter',
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: Column(
@@ -153,15 +130,12 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildCard(BuildContext context, String title, IconData icon,
-      Widget? page, Color backColor) {
+  Widget _buildCard(BuildContext context, String title, IconData icon, Widget? page, Color backColor) {
     return Card(
-      elevation: 10,
+      elevation: 50,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0), // Adjust corner radius
+        borderRadius: BorderRadius.circular(16.0),
       ),
-      surfaceTintColor: backColor,
-      margin: const EdgeInsets.all(8.0),
       child: InkWell(
         onTap: () {
           if (page != null) {
@@ -171,21 +145,58 @@ class _MyHomePageState extends State<MyHomePage> {
             );
           }
         },
-        child: Container(
-          width: 300,
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 50),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                style: const TextStyle(fontSize: 20),
-                textAlign: TextAlign.center,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 120, // Adjusted height to fit within the PageView
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(15.0),
+                  topRight: Radius.circular(15.0),
+                ),
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/Background.png'),
+                  fit: BoxFit.cover,
+                ),
+                color: backColor.withOpacity(0.5),
               ),
-            ],
-          ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(icon, size: 40, color: backColor),
+                    title: Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Enjoy the view', // Add a subtitle here
+                      style: TextStyle(
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'A beautiful sunset is one of the most captivating sights nature has to offer.',
+                    style: TextStyle(
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.start,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
