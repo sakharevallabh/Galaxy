@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:galaxy/pages/accounts_page.dart';
 import 'package:galaxy/pages/achivements_page.dart';
@@ -96,10 +98,13 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildGridCard(BuildContext context, String title, IconData icon, Widget? page, Color backColor, String stats) {
+  Widget _buildGridCard(BuildContext context, String title, IconData icon, Widget? page, Color backColor, String stats, int duration) {
     return FlipCard(
+      direction: FlipDirection.HORIZONTAL,
+      // speed: duration * 100,
+      autoFlipDuration: Duration(milliseconds: duration * 100),
       front: Card(
-        elevation: 10,
+        elevation: 20,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10.0),
         ),
@@ -196,14 +201,14 @@ class _MyHomePageState extends State<MyHomePage> {
               physics: const NeverScrollableScrollPhysics(),
               padding: const EdgeInsets.all(10),
               children: [
-                _buildGridCard(context, 'People', Icons.people, const PeoplePage(), Colors.amberAccent, 'Total People: 50'),
-                _buildGridCard(context, 'Documents', Icons.picture_as_pdf, const DocumentsPage(), Colors.blueAccent, 'Total Documents: 120'),
-                _buildGridCard(context, 'Accounts', Icons.account_balance, const AccountsPage(), Colors.redAccent, 'Total Accounts: 10'),
-                _buildGridCard(context, 'Vehicles', Icons.directions_car_rounded, const VehiclesPage(), Colors.purpleAccent, 'Total Vehicles: 5'),
-                _buildGridCard(context, 'Assets', Icons.real_estate_agent, const AssetsPage(), Colors.greenAccent, 'Total Assets: 15'),
-                _buildGridCard(context, 'Expenses', Icons.attach_money_rounded, const ExpensesPage(), Colors.pinkAccent, 'Total Expenses: \$2000'),
-                _buildGridCard(context, 'Achievements', Icons.workspace_premium_rounded, const AchivementsPage(), Colors.orangeAccent, 'Total Achievements: 20'),
-                _buildGridCard(context, 'My Universe', Icons.auto_awesome_sharp, const MyUniversePage(), Colors.indigoAccent, 'Total Items: 100'),
+                _buildGridCard(context, 'People', Icons.people, const PeoplePage(), Colors.amberAccent, 'Total People: 50', Random().nextInt(5) + 1),
+                _buildGridCard(context, 'Documents', Icons.picture_as_pdf, const DocumentsPage(), Colors.blueAccent, 'Total Documents: 120', Random().nextInt(5) + 1),
+                _buildGridCard(context, 'Accounts', Icons.account_balance, const AccountsPage(), Colors.redAccent, 'Total Accounts: 10', Random().nextInt(5) + 1),
+                _buildGridCard(context, 'Vehicles', Icons.directions_car_rounded, const VehiclesPage(), Colors.purpleAccent, 'Total Vehicles: 5', Random().nextInt(5) + 1),
+                _buildGridCard(context, 'Assets', Icons.real_estate_agent, const AssetsPage(), Colors.greenAccent, 'Total Assets: 15', Random().nextInt(5) + 1),
+                _buildGridCard(context, 'Expenses', Icons.attach_money_rounded, const ExpensesPage(), Colors.pinkAccent, 'Total Expenses: \$2000', Random().nextInt(5) + 1),
+                _buildGridCard(context, 'Achievements', Icons.workspace_premium_rounded, const AchivementsPage(), Colors.orangeAccent, 'Total Achievements: 20', Random().nextInt(5) + 1),
+                _buildGridCard(context, 'My Universe', Icons.auto_awesome_sharp, const MyUniversePage(), Colors.indigoAccent, 'Total Items: 100', Random().nextInt(5) + 1),
               ],
             ),
             const SizedBox(height: 20),
