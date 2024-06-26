@@ -134,7 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Card(
       elevation: 50,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(50.0),
       ),
       child: InkWell(
         onTap: () {
@@ -149,11 +149,11 @@ class _MyHomePageState extends State<MyHomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 120, // Adjusted height to fit within the PageView
+              height: 200, // Adjusted height to fit within the PageView
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(15.0),
-                  topRight: Radius.circular(15.0),
+                  topLeft: Radius.circular(36.0),
+                  topRight: Radius.circular(36.0),
                 ),
                 image: const DecorationImage(
                   image: AssetImage('assets/images/Background.png'),
@@ -163,13 +163,13 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(10.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(icon, size: 40, color: backColor),
+                    leading: Icon(icon, size: 40, color: Colors.black),
                     title: Text(
                       title,
                       style: const TextStyle(
@@ -178,21 +178,20 @@ class _MyHomePageState extends State<MyHomePage> {
                         color: Colors.black87,
                       ),
                     ),
-                    subtitle: const Text(
-                      'Enjoy the view', // Add a subtitle here
-                      style: TextStyle(
-                        color: Colors.black54,
+                    subtitle: Text(
+                      'Checkout $title in your Universe', // Add a subtitle here
+                      style: const TextStyle(
+                        color: Colors.black87,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'A beautiful sunset is one of the most captivating sights nature has to offer.',
-                    style: TextStyle(
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.start,
-                  ),
+                  // const Text(
+                  //   'A beautiful sunset is one of the most captivating sights nature has to offer.',
+                  //   style: TextStyle(
+                  //     color: Colors.black,
+                  //   ),
+                  //   textAlign: TextAlign.start,
+                  // ),
                 ],
               ),
             ),
