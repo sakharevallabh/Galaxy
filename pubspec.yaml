@@ -51,6 +51,7 @@ dependencies:
   flutter_local_notifications: ^17.1.2
   email_auth: ^2.0.0
   smooth_page_indicator: ^1.1.0
+  flip_card: ^0.7.0
 
 dev_dependencies:
   flutter_test:

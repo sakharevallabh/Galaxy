@@ -9,6 +9,7 @@ import 'package:galaxy/pages/people_page.dart';
 import 'package:galaxy/pages/vehicles_page.dart';
 import 'package:galaxy/widget/navigation_drawer_widget.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:flip_card/flip_card.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -36,6 +37,119 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  Widget _buildCarouselCard(String title, String subtitle, IconData icon, Widget? page, Color backColor) {
+    return Card(
+      elevation: 50,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(30.0),
+      ),
+      child: InkWell(
+        onTap: () {
+          if (page != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => page),
+            );
+          }
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 150,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(30.0),
+                  topRight: Radius.circular(30.0),
+                ),
+                color: backColor,
+              ),
+              child: Center(
+                child: Icon(icon, size: 80, color: Colors.white),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGridCard(BuildContext context, String title, IconData icon, Widget? page, Color backColor, String stats) {
+    return FlipCard(
+      front: Card(
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: InkWell(
+          onTap: () {
+            if (page != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => page),
+              );
+            }
+          },
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 50, color: backColor),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      back: Card(
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        color: backColor.withOpacity(0.7),
+        child: Center(
+          child: Text(
+            stats,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,18 +163,18 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           children: <Widget>[
             SizedBox(
-              height: 300, // Adjust height to prevent overflow
+              height: 250,
               child: PageView(
                 controller: _pageController,
                 children: [
-                  _buildCard(context, 'People', Icons.people, const PeoplePage(), Colors.amberAccent),
-                  _buildCard(context, 'Documents', Icons.picture_as_pdf, const DocumentsPage(), Colors.blueAccent),
-                  _buildCard(context, 'Accounts', Icons.account_balance, const AccountsPage(), Colors.redAccent),
-                  _buildCard(context, 'Vehicles', Icons.directions_car_rounded, const VehiclesPage(), Colors.purpleAccent),
-                  _buildCard(context, 'Assets', Icons.real_estate_agent, const AssetsPage(), Colors.greenAccent),
-                  _buildCard(context, 'Expenses', Icons.attach_money_rounded, const ExpensesPage(), Colors.pinkAccent),
-                  _buildCard(context, 'Achievements', Icons.workspace_premium_rounded, const AchivementsPage(), Colors.orangeAccent),
-                  _buildCard(context, 'My Universe', Icons.auto_awesome_sharp, const MyUniversePage(), Colors.indigoAccent),
+                  _buildCarouselCard('People Galaxy', 'Manage your contacts', Icons.people, const PeoplePage(), Colors.amberAccent),
+                  _buildCarouselCard('Documents Galaxy', 'Organize your files', Icons.picture_as_pdf, const DocumentsPage(), Colors.blueAccent),
+                  _buildCarouselCard('Accounts Galaxy', 'Track your finances', Icons.account_balance, const AccountsPage(), Colors.redAccent),
+                  _buildCarouselCard('Vehicles Galaxy', 'Maintain your vehicles', Icons.directions_car_rounded, const VehiclesPage(), Colors.purpleAccent),
+                  _buildCarouselCard('Assets Galaxy', 'Manage your properties', Icons.real_estate_agent, const AssetsPage(), Colors.greenAccent),
+                  _buildCarouselCard('Expenses Galaxy', 'Track your expenses', Icons.attach_money_rounded, const ExpensesPage(), Colors.pinkAccent),
+                  _buildCarouselCard('Achievements Galaxy', 'Record your milestones', Icons.workspace_premium_rounded, const AchivementsPage(), Colors.orangeAccent),
+                  _buildCarouselCard('My Universe Galaxy', 'Explore your universe', Icons.auto_awesome_sharp, const MyUniversePage(), Colors.indigoAccent),
                 ],
               ),
             ),
@@ -74,6 +188,23 @@ class _MyHomePageState extends State<MyHomePage> {
                 dotHeight: 10,
                 dotWidth: 10,
               ),
+            ),
+            const SizedBox(height: 20),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(10),
+              children: [
+                _buildGridCard(context, 'People', Icons.people, const PeoplePage(), Colors.amberAccent, 'Total People: 50'),
+                _buildGridCard(context, 'Documents', Icons.picture_as_pdf, const DocumentsPage(), Colors.blueAccent, 'Total Documents: 120'),
+                _buildGridCard(context, 'Accounts', Icons.account_balance, const AccountsPage(), Colors.redAccent, 'Total Accounts: 10'),
+                _buildGridCard(context, 'Vehicles', Icons.directions_car_rounded, const VehiclesPage(), Colors.purpleAccent, 'Total Vehicles: 5'),
+                _buildGridCard(context, 'Assets', Icons.real_estate_agent, const AssetsPage(), Colors.greenAccent, 'Total Assets: 15'),
+                _buildGridCard(context, 'Expenses', Icons.attach_money_rounded, const ExpensesPage(), Colors.pinkAccent, 'Total Expenses: \$2000'),
+                _buildGridCard(context, 'Achievements', Icons.workspace_premium_rounded, const AchivementsPage(), Colors.orangeAccent, 'Total Achievements: 20'),
+                _buildGridCard(context, 'My Universe', Icons.auto_awesome_sharp, const MyUniversePage(), Colors.indigoAccent, 'Total Items: 100'),
+              ],
             ),
             const SizedBox(height: 20),
             const Text(
@@ -126,77 +257,6 @@ class _MyHomePageState extends State<MyHomePage> {
             child: const Icon(Icons.share_sharp),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCard(BuildContext context, String title, IconData icon, Widget? page, Color backColor) {
-    return Card(
-      elevation: 50,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(50.0),
-      ),
-      child: InkWell(
-        onTap: () {
-          if (page != null) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => page),
-            );
-          }
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 200, // Adjusted height to fit within the PageView
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(36.0),
-                  topRight: Radius.circular(36.0),
-                ),
-                image: const DecorationImage(
-                  image: AssetImage('assets/images/Background.png'),
-                  fit: BoxFit.cover,
-                ),
-                color: backColor.withOpacity(0.5),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(icon, size: 40, color: Colors.black),
-                    title: Text(
-                      title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Checkout $title in your Universe', // Add a subtitle here
-                      style: const TextStyle(
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  // const Text(
-                  //   'A beautiful sunset is one of the most captivating sights nature has to offer.',
-                  //   style: TextStyle(
-                  //     color: Colors.black,
-                  //   ),
-                  //   textAlign: TextAlign.start,
-                  // ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
