@@ -51,6 +51,12 @@ class _MyHomePageState extends State<MyHomePage> {
   List<GlobalKey<FlipCardState>> cardKeys =
       List.generate(8, (index) => GlobalKey<FlipCardState>());
   List<Timer?> timers = List.generate(8, (index) => null);
+  
+  Future<String> getRandomAssetImage(List<String> imageList) async {
+    // await Future.delayed(const Duration(seconds: 2)); // Simulating async delay
+    final random = Random();
+    return imageList[random.nextInt(imageList.length)];
+  }
 
   @override
   void initState() {
@@ -97,66 +103,169 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  // Widget _buildCarouselCard(String title, String subtitle, IconData icon,
+  //     Widget? page, Color backColor, String imageFile) {
+  //   return Card(
+  //     shadowColor: Colors.black12,
+  //     elevation: 50,
+  //     shape: RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.circular(30.0),
+  //     ),
+  //     child: InkWell(
+  //       onTap: () {
+  //         if (page != null) {
+  //           Navigator.push(
+  //             context,
+  //             MaterialPageRoute(builder: (context) => page),
+  //           );
+  //         }
+  //       },
+  //       child: Column(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           Container(
+  //             height: 150,
+  //             decoration: BoxDecoration(
+  //               image: DecorationImage(
+  //                 image: AssetImage(imageFile),
+  //                 fit: BoxFit.cover,
+  //                 alignment: Alignment.center,
+  //               ),
+  //               borderRadius: const BorderRadius.only(
+  //                 topLeft: Radius.circular(30.0),
+  //                 topRight: Radius.circular(30.0),
+  //               ),
+  //               color: backColor,
+  //             ),
+  //           ),
+  //           Padding(
+  //             padding: const EdgeInsets.all(10.0),
+  //             child: Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Text(
+  //                   title,
+  //                   style: const TextStyle(
+  //                     fontWeight: FontWeight.bold,
+  //                     fontSize: 16,
+  //                     color: Colors.black87,
+  //                   ),
+  //                 ),
+  //                 Text(
+  //                   subtitle,
+  //                   style: const TextStyle(
+  //                     color: Colors.black54,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildCarouselCard(String title, String subtitle, IconData icon,
-      Widget? page, Color backColor, String imageFile) {
-    return Card(
-      shadowColor: Colors.black12,
-      elevation: 50,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(30.0),
-      ),
-      child: InkWell(
-        onTap: () {
-          if (page != null) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => page),
-            );
-          }
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 150,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage(imageFile),
-                  fit: BoxFit.cover,
-                  alignment: Alignment.center,
-                ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(30.0),
-                  topRight: Radius.circular(30.0),
-                ),
-                color: backColor,
-              ),
+      Widget? page, Color backColor, List<String> imageFile) {
+    return FutureBuilder<String>(
+      future: getRandomAssetImage(imageFile),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Card(
+            shadowColor: Colors.black12,
+            elevation: 50,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0),
             ),
-            Padding(
-              padding: const EdgeInsets.all(10.0),
+            child: const Center(
+              child: CircularProgressIndicator(), // Loading indicator
+            ),
+          );
+        } else if (snapshot.hasError) {
+          return Card(
+            shadowColor: Colors.black12,
+            elevation: 50,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0),
+            ),
+            child: const Center(
+              child: Text('Error loading image'), // Error handling
+            ),
+          );
+        } else if (snapshot.hasData) {
+          return Card(
+            shadowColor: Colors.black12,
+            elevation: 50,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0),
+            ),
+            child: InkWell(
+              onTap: () {
+                if (page != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => page),
+                  );
+                }
+              },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.black87,
+                  Container(
+                    height: 150,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage(snapshot.data!),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.center,
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(30.0),
+                        topRight: Radius.circular(30.0),
+                      ),
+                      color: backColor,
                     ),
                   ),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: Colors.black54,
+                  Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
+          );
+        } else {
+          return Card(
+            shadowColor: Colors.black12,
+            elevation: 50,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0),
+            ),
+            child: const Center(
+              child: Text('No image'), // Handle no image scenario
+            ),
+          );
+        }
+      },
     );
   }
 
@@ -248,56 +357,56 @@ class _MyHomePageState extends State<MyHomePage> {
                         Icons.people,
                         const PeoplePage(),
                         Colors.amberAccent,
-                        getRandomString(peopleCarouselImage)),
+                        peopleCarouselImage),
                     _buildCarouselCard(
                         'Documents Galaxy',
                         'Organize files like never before!!',
                         Icons.picture_as_pdf,
                         const DocumentsPage(),
                         Colors.blueAccent,
-                        getRandomString(documentsCarouselImage)),
+                        documentsCarouselImage),
                     _buildCarouselCard(
                         'Accounts Galaxy',
                         'Save Accounts and IDs. Don\'t ever forget.',
                         Icons.account_balance,
                         const AccountsPage(),
                         Colors.redAccent,
-                        getRandomString(accountsCarouselImage)),
+                        accountsCarouselImage),
                     _buildCarouselCard(
                         'Vehicles Galaxy',
                         'Maintain vehicles. Vrooom Vroom Vroom..',
                         Icons.directions_car_rounded,
                         const VehiclesPage(),
                         Colors.purpleAccent,
-                        getRandomString(vehiclesCarouselImage)),
+                        vehiclesCarouselImage),
                     _buildCarouselCard(
                         'Assets Galaxy',
                         'Manage your Assets like a PRO!!',
                         Icons.real_estate_agent,
                         const AssetsPage(),
                         Colors.greenAccent,
-                        getRandomString(assetsCarouselImage)),
+                        assetsCarouselImage),
                     _buildCarouselCard(
                         'Expenses Galaxy',
                         'Track your expenses. Intelligently!!',
                         Icons.attach_money_rounded,
                         const ExpensesPage(),
                         Colors.pinkAccent,
-                        getRandomString(expensesCarouselImage)),
+                        expensesCarouselImage),
                     _buildCarouselCard(
                         'Achievements Galaxy',
                         'Record your milestones. Aim Higher',
                         Icons.workspace_premium_rounded,
                         const AchivementsPage(),
                         Colors.orangeAccent,
-                        getRandomString(achievemetnsCarouselImage)),
+                        achievemetnsCarouselImage),
                     _buildCarouselCard(
                         'My Universe',
                         'Explore your universe and dive in Galaxies',
                         Icons.auto_awesome_sharp,
                         const MyUniversePage(),
                         Colors.indigoAccent,
-                        getRandomString(myUniverseCarouselImage)),
+                        myUniverseCarouselImage),
                   ],
                 ),
               ),
