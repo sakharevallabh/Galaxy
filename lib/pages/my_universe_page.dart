@@ -3,7 +3,44 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
-// Model class for recommendation article
+// Model classes for stored data
+class PersonalDetails {
+  final String name;
+  final int age;
+  final String location;
+
+  PersonalDetails({
+    required this.name,
+    required this.age,
+    required this.location,
+  });
+}
+
+class Vehicle {
+  final String make;
+  final String model;
+  final int year;
+
+  Vehicle({
+    required this.make,
+    required this.model,
+    required this.year,
+  });
+}
+
+class Expense {
+  final String category;
+  final double amount;
+  final DateTime date;
+
+  Expense({
+    required this.category,
+    required this.amount,
+    required this.date,
+  });
+}
+
+// Model classes for recommendation article and personal recommendation
 class RecommendationArticle {
   final String title;
   final String description;
@@ -33,7 +70,6 @@ class RecommendationArticle {
   }
 }
 
-// Model class for personal recommendation
 class PersonalRecommendation {
   final String title;
   final String description;
@@ -44,24 +80,12 @@ class PersonalRecommendation {
   });
 }
 
-// Simulated user preferences
 class UserPreferences {
   int age;
   String location;
   List<String> interests;
-  List<String> selectedCategories; // Selected categories based on user preference
-
-  // List of available categories
-  static const List<String> categories = [
-    'Technology',
-    'Finance',
-    'Health',
-    'Sports',
-    'Travel',
-    'Food',
-    'Entertainment',
-    'Science',
-  ];
+  List<String>
+      selectedCategories; // Selected categories based on user preference
 
   UserPreferences({
     required this.age,
@@ -79,16 +103,52 @@ class MyUniversePage extends StatefulWidget {
 }
 
 class MyUniversePageState extends State<MyUniversePage> {
+  // Simulated stored data
+  List<PersonalDetails> personalDetailsList = [
+    PersonalDetails(name: 'John Doe', age: 50, location: 'New York'),
+    PersonalDetails(name: 'Jane Smith', age: 25, location: 'Los Angeles'),
+    // Add more personal details as needed
+  ];
+
+  List<Vehicle> vehicleList = [
+    Vehicle(make: 'Toyota', model: 'Camry', year: 2020),
+    Vehicle(make: 'Honda', model: 'Civic', year: 2018),
+    // Add more vehicles as needed
+  ];
+
+  List<Expense> expenseList = [
+    Expense(category: 'Groceries', amount: 1000.0, date: DateTime(2024, 6, 1)),
+    Expense(category: 'Travel', amount: 200.0, date: DateTime(2023, 5, 15)),
+    // Add more expenses as needed
+  ];
+
   // Simulated user preferences
   UserPreferences userPreferences = UserPreferences(
     age: 30,
     location: 'New York',
     interests: ['Technology', 'Finance'],
-    selectedCategories: ['Technology', 'Finance'], // Default selected categories
+    selectedCategories: [
+      'Technology',
+      'Finance'
+    ], // Default selected categories
   );
+
+  // Static list of categories
+  static const List<String> categories = [
+    'Technology',
+    'Finance',
+    'Health',
+    'Sports',
+    'Travel',
+    'Food',
+    'Entertainment',
+    'Science',
+  ];
 
   Map<String, List<RecommendationArticle>> articlesMap = {};
   List<PersonalRecommendation> personalRecommendations = [];
+
+  String randomImageURL = 'https://picsum.photos/200/300';
 
   @override
   void initState() {
@@ -109,7 +169,8 @@ class MyUniversePageState extends State<MyUniversePage> {
 
   // Function to fetch personal recommendations based on stored data
   Future<void> fetchPersonalRecommendations() async {
-    List<PersonalRecommendation> recommendations = await generatePersonalRecommendations();
+    List<PersonalRecommendation> recommendations =
+        await generatePersonalRecommendations();
     setState(() {
       personalRecommendations = recommendations;
     });
@@ -120,58 +181,53 @@ class MyUniversePageState extends State<MyUniversePage> {
     List<PersonalRecommendation> recommendations = [];
 
     // Example logic to generate recommendations based on stored data
-    // Replace with your actual implementation based on SQLite data
-
-    // Check for missing insurance (simulated example)
-    bool missingInsurance = true; // Replace with actual check
-    if (missingInsurance) {
+    // Check for vehicles older than 5 years
+    List<Vehicle> oldVehicles = vehicleList
+        .where((vehicle) => DateTime.now().year - vehicle.year > 5)
+        .toList();
+    if (oldVehicles.isNotEmpty) {
       recommendations.add(PersonalRecommendation(
-        title: 'Missing Insurance',
-        description: 'You have insurance details missing. Update now to stay protected.',
+        title: 'Old Vehicles Detected',
+        description:
+            'Consider upgrading your ${oldVehicles.length > 1 ? 'vehicles' : 'vehicle'}: ${oldVehicles.map((v) => '${v.make} ${v.model}').join(', ')}',
       ));
     }
 
-    // Check for critical financial news (simulated example)
-    bool criticalNewsAvailable = true; // Replace with actual check
-    if (criticalNewsAvailable) {
+    // Check for recent large expenses
+    DateTime recentDateThreshold = DateTime.now().subtract(const Duration(days: 30));
+    List<Expense> largeExpenses = expenseList
+        .where((expense) =>
+            expense.amount > 500 && expense.date.isAfter(recentDateThreshold))
+        .toList();
+    if (largeExpenses.isNotEmpty) {
       recommendations.add(PersonalRecommendation(
-        title: 'Critical Financial News',
-        description: 'Stay updated with the latest financial news to make informed decisions.',
+        title: 'Recent Large Expenses',
+        description:
+            'You had significant expenses recently in ${largeExpenses.map((e) => e.category).join(', ')}',
       ));
     }
 
-    // Check for updated credit card offers (simulated example)
-    List<String> updatedCreditCards = ['Gold Credit Card', 'Diamond Credit Card']; // Replace with actual check
-    if (updatedCreditCards.isNotEmpty) {
-      recommendations.add(PersonalRecommendation(
-        title: 'Updated Credit Cards',
-        description: 'New credit card offers available. Check them out now.',
-      ));
-    }
-
-    // Check for new local restaurants (simulated example)
-    List<String> newRestaurants = ['Cafe DArmas', 'Ride the Dragon - Chinese ']; // Replace with actual check
-    if (newRestaurants.isNotEmpty) {
-      recommendations.add(PersonalRecommendation(
-        title: 'New Restaurants Nearby',
-        description: 'Explore new restaurants $newRestaurants that have opened near you.',
-      ));
-    }
-
-    // Check for important government announcements (simulated example)
-    List<String> governmentAnnouncements = ['Link Aadhaar and PAN']; // Replace with actual check
-    if (governmentAnnouncements.isNotEmpty) {
-      recommendations.add(PersonalRecommendation(
-        title: 'Important Government Announcements',
-        description: 'Stay informed with recent government announcements to $governmentAnnouncements',
-      ));
+    // Check for age-related recommendations
+    if (personalDetailsList.isNotEmpty) {
+      int averageAge = personalDetailsList
+              .map((details) => details.age)
+              .reduce((a, b) => a + b) ~/
+          personalDetailsList.length;
+      if (averageAge > 30) {
+        recommendations.add(PersonalRecommendation(
+          title: 'Age Consideration',
+          description:
+              'Based on average age ($averageAge), consider planning for retirement.',
+        ));
+      }
     }
 
     return recommendations;
   }
 
   // Function to fetch recommended articles based on user preferences
-  Future<Map<String, List<RecommendationArticle>>> fetchRecommendedArticles(UserPreferences preferences) async {
+  Future<Map<String, List<RecommendationArticle>>> fetchRecommendedArticles(
+      UserPreferences preferences) async {
     Map<String, List<RecommendationArticle>> articlesMap = {};
 
     // Simulated fetching of articles based on selected categories
@@ -233,7 +289,8 @@ class MyUniversePageState extends State<MyUniversePage> {
                           child: ListTile(
                             title: Text(
                               recommendation.title,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(recommendation.description),
                             onTap: () {
@@ -257,12 +314,14 @@ class MyUniversePageState extends State<MyUniversePage> {
             ),
             Wrap(
               children: List.generate(
-                UserPreferences.categories.length,
+                categories.length,
                 (index) {
-                  String category = UserPreferences.categories[index];
-                  bool isSelected = userPreferences.selectedCategories.contains(category);
+                  String category = categories[index];
+                  bool isSelected =
+                      userPreferences.selectedCategories.contains(category);
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8.0, vertical: 4.0),
                     child: ChoiceChip(
                       label: Text(category),
                       selected: isSelected,
@@ -288,32 +347,45 @@ class MyUniversePageState extends State<MyUniversePage> {
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: userPreferences.selectedCategories.length,
+              itemCount: articlesMap.keys.length,
               itemBuilder: (context, index) {
-                String category = userPreferences.selectedCategories[index];
+                String category = articlesMap.keys.toList()[index];
+                List<RecommendationArticle> articles =
+                    articlesMap[category] ?? [];
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Text(
-                        '$category Articles',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                         '$category Articles',
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
                     SizedBox(
-                      height: 200,
+                      height: 200, // Adjust the height as needed
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: articlesMap[category]?.length ?? 0,
-                        itemBuilder: (context, idx) {
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: InkWell(
-                              onTap: () {
-                                launchUrl(articlesMap[category]![idx].url);
-                              },
-                              child: Container(
+                        itemCount: articles.length,
+                        itemBuilder: (context, index) {
+                          RecommendationArticle article = articles[index];
+                          return Container(
+                            width: 300, // Adjust the width as needed
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 8.0, vertical: 4.0),
+                            child: Card(
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  // Launch article URL on tap
+                                  launchUrl(article.url);
+                                },
+                                child: SizedBox(
                                 width: 150,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,7 +393,7 @@ class MyUniversePageState extends State<MyUniversePage> {
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8.0),
                                       child: Image.network(
-                                        articlesMap[category]![idx].url,
+                                        randomImageURL,
                                         height: 100,
                                         width: 150,
                                         fit: BoxFit.cover,
@@ -329,20 +401,21 @@ class MyUniversePageState extends State<MyUniversePage> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      articlesMap[category]![idx].title,
+                                      article.title,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(fontWeight: FontWeight.bold),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      articlesMap[category]![idx].description,
+                                      article.description,
                                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
+                              ),
                               ),
                             ),
                           );
@@ -403,5 +476,4 @@ Map<String, List<String>> categoryArticleUrls = {
     'https://jsonplaceholder.typicode.com/posts/24',
   ],
 };
-
 
