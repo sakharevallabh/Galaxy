@@ -78,7 +78,9 @@ flutter:
   uses-material-design: true
 
   assets:
+  # Add Image Assets here
     - assets/images/GalaxyLogo.png
+    - assets/images/HomeScreen_Background.jpeg
     - assets/images/Background.png
     - assets/images/add_car.png
     - assets/images/add_car_outlined.png
@@ -86,6 +88,18 @@ flutter:
     - assets/images/Profile_Settings.jpg
     - assets/images/Settings.jpg
     - assets/images/placeholder.png
+    - assets/images/People_Carousel_1.jpeg
+    - assets/images/Documents_Carousel.jpg
+    - assets/images/Accounts_Carousel.jpeg
+    - assets/images/Assets_Carousel_1.jpeg
+    - assets/images/Assets_Carousel_2.jpeg
+    - assets/images/Vehicles_Carousel_1.jpeg
+    - assets/images/Expenses_Carousel_1.jpeg
+    - assets/images/Achievements_Carousel.jpeg
+    - assets/images/MyUniverse_Carousel.jpg
+    - assets/images/HomeScreen_Background.jpeg
+
+   # Add data Assets here 
     - assets/data/countries.json
     - assets/data/professions.json
     

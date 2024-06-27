@@ -154,7 +154,7 @@ class MyUniversePageState extends State<MyUniversePage> {
     if (newRestaurants.isNotEmpty) {
       recommendations.add(PersonalRecommendation(
         title: 'New Restaurants Nearby',
-        description: 'Explore new restaurants that have opened near you.',
+        description: 'Explore new restaurants $newRestaurants that have opened near you.',
       ));
     }
 
@@ -163,7 +163,7 @@ class MyUniversePageState extends State<MyUniversePage> {
     if (governmentAnnouncements.isNotEmpty) {
       recommendations.add(PersonalRecommendation(
         title: 'Important Government Announcements',
-        description: 'Stay informed with recent government announcements.',
+        description: 'Stay informed with recent government announcements to $governmentAnnouncements',
       ));
     }
 
