@@ -244,7 +244,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     _buildCarouselCard(
                         'People Galaxy',
-                        'Store contacts! Don\'t forget them..',
+                        'Store contacts! Don\'t just miss them..',
                         Icons.people,
                         const PeoplePage(),
                         Colors.amberAccent,
@@ -265,7 +265,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         getRandomString(accountsCarouselImage)),
                     _buildCarouselCard(
                         'Vehicles Galaxy',
-                        'Maintain vehicles. Vrooom Vroom Vroom..',
+                        'Maintain all vehicles. Vrooom Vroom Vroom..',
                         Icons.directions_car_rounded,
                         const VehiclesPage(),
                         Colors.purpleAccent,
@@ -286,7 +286,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         getRandomString(expensesCarouselImage)),
                     _buildCarouselCard(
                         'Achievements Galaxy',
-                        'Record your milestones. Aim Higher',
+                        'Record all milestones. Aim Higher',
                         Icons.workspace_premium_rounded,
                         const AchivementsPage(),
                         Colors.orangeAccent,

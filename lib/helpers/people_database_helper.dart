@@ -78,4 +78,9 @@ class DatabaseHelper {
       whereArgs: [id],
     );
   }
+
+  Future<void> closeDatabase() async {
+    Database db = await database;
+    await db.close();
+  }
 }

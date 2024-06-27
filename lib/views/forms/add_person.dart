@@ -18,7 +18,7 @@ class AddPersonView extends StatefulWidget {
 class AddPersonViewState extends State<AddPersonView> {
   final _formKey = GlobalKey<FormState>();
   final logger = Logger();
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
+  final DatabaseHelper databaseHelper = DatabaseHelper();
   XFile? _image;
   Uint8List? _photo;
   final Map<String, dynamic> _formData = {};
@@ -81,10 +81,12 @@ class AddPersonViewState extends State<AddPersonView> {
     setState(() {
       Navigator.pop(context);
     });
+    databaseHelper.closeDatabase();
     super.dispose();
   }
 
   void _clearForm() {
+     _formKey.currentState!.reset();
     _controllers['Name']!.text = "";
     _controllers['Gender']!.text = "";
     _controllers['Date of Birth']!.text = "";
@@ -108,7 +110,7 @@ class AddPersonViewState extends State<AddPersonView> {
       if (_image != null) {
         _formData['photo'] = _image!.path;
       }
-      await _databaseHelper.insertPerson({
+      await databaseHelper.insertPerson({
         'name': _controllers['Name']!.text,
         'gender': _controllers['Gender']!.text,
         'dob': _controllers['Date of Birth']!.text,

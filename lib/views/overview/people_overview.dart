@@ -21,6 +21,15 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
     _fetchPeople();
   }
 
+  @override
+  void dispose() {
+    setState(() {
+      Navigator.pop(context);
+    });
+    databaseHelper.closeDatabase();
+    super.dispose();
+  }
+
   Future<void> _fetchPeople() async {
     List<PersonModel> fetchedUsers = await databaseHelper.getPerson();
     setState(() {

@@ -23,7 +23,7 @@ class PersonDetailsPage extends StatefulWidget {
 
 class PersonDetailsPageState extends State<PersonDetailsPage> {
   late PersonModel _person;
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
+  final DatabaseHelper databaseHelper = DatabaseHelper();
   final List<String> _selectedFields = [];
   late Map<String, TextEditingController> _controllers;
   XFile? _image;
@@ -71,6 +71,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     setState(() {
       Navigator.pop(context);
     });
+    databaseHelper.closeDatabase();
     super.dispose();
   }
 
@@ -89,7 +90,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       maritalStatus: _controllers['Marital Status']!.text,
       profession: _controllers['Profession']!.text,
     );
-    await _databaseHelper.updatePerson(personUpdated);
+    await databaseHelper.updatePerson(personUpdated);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Details updated successfully!')),
@@ -99,7 +100,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   }
 
   Future<void> _deletePerson() async {
-    await _databaseHelper.deletePerson(_person.id!);
+    await databaseHelper.deletePerson(_person.id!);
     if (mounted) {
       Navigator.pop(context, true);
     }
