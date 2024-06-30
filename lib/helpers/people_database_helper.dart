@@ -1,18 +1,17 @@
-import 'dart:io';
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:galaxy/model/person_model.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
-  final String tablePerson = 'person';
-
-  factory DatabaseHelper() {
-    return _instance;
-  }
+  factory DatabaseHelper() => _instance;
+  final String tablePeople = 'people';
 
   DatabaseHelper._internal();
+
   Database? _database;
 
   Future<Database> get database async {
@@ -22,65 +21,103 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    Directory documentsDirectory = await getApplicationDocumentsDirectory();
-    String path = join(documentsDirectory.path, 'person_data.db');
-    return await openDatabase(path, version: 1, onCreate: _onCreate);
-  }
+    final databasePath = await getDatabasesPath();
+    final path = join(databasePath, 'people_database.db');
 
-  Future<void> _onCreate(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE $tablePerson (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        gender TEXT,
-        dob TEXT,
-        birthPlace TEXT,
-        presentAddress TEXT,
-        presentCountry TEXT,
-        presentPincode TEXT,
-        permanentAddress TEXT,
-        maritalStatus TEXT,
-        profession TEXT,
-        photo BLOB
-      )
-    ''');
-  }
-
-  Future<int> insertPerson(Map<String, dynamic> row) async {
-    Database db = await database;
-    return await db.insert(tablePerson, row);
-  }
-
-  Future<List<PersonModel>> getPerson() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(tablePerson);
-    return List.generate(maps.length, (i) {
-      return PersonModel.fromMap(maps[i]);
-    });
-  }
-
-  Future<void> updatePerson(PersonModel person) async {
-    final db = await database;
-    await db.update(
-      tablePerson,
-      person.toMap(),
-      where: 'id = ?',
-      whereArgs: [person.id],
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS $tablePeople (
+            id INTEGER PRIMARY KEY AUTOINCREMENT
+          )
+        ''');
+      },
     );
   }
 
-  Future<void> deletePerson(int id) async {
+  Future<void> insertPerson(Map<String, dynamic> personData) async {
     final db = await database;
 
-    await db.delete(
-      tablePerson,
+    final existingColumns = await _getColumns(db, tablePeople);
+    final newColumns = personData.keys.where((key) => !existingColumns.contains(key)).toList();
+
+    // Add new columns if they don't exist
+    for (final column in newColumns) {
+      await db.execute('ALTER TABLE $tablePeople ADD COLUMN $column TEXT');
+    }
+
+    // Convert the image to a base64 string if it exists
+    if (personData.containsKey('photo')) {
+      final Uint8List? photoBytes = personData['photo'];
+      if (photoBytes != null) {
+        personData['photo'] = base64Encode(photoBytes);
+      }
+    }
+
+    await db.insert(tablePeople, personData,
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<String>> _getColumns(Database db, String tableName) async {
+    final List<Map<String, dynamic>> result =
+        await db.rawQuery('PRAGMA table_info($tableName)');
+    return result.map((row) => row['name'] as String).toList();
+  }
+
+  Future<List<PersonModel>> getAllPersons() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tablePeople);
+
+    return List.generate(maps.length, (i) {
+      return PersonModel.fromJson(maps[i]);
+    });
+  }
+
+  Future<void> updatePerson(int id, Map<String, dynamic> updatedData) async {
+    final db = await database;
+
+    final existingColumns = await _getColumns(db, tablePeople);
+    final newColumns = updatedData.keys.where((key) => !existingColumns.contains(key)).toList();
+
+    // Add new columns if they don't exist
+    for (final column in newColumns) {
+      await db.execute('ALTER TABLE $tablePeople ADD COLUMN $column TEXT');
+    }
+
+    // Convert the image to a base64 string if it exists
+    if (updatedData.containsKey('photo')) {
+      final Uint8List? photoBytes = updatedData['photo'];
+      if (photoBytes != null) {
+        updatedData['photo'] = base64Encode(photoBytes);
+      }
+    }
+
+    await db.update(
+      tablePeople,
+      updatedData,
       where: 'id = ?',
       whereArgs: [id],
     );
   }
 
+   Future<bool> deletePerson(int id) async {
+    try {
+      final db = await database;
+      int count = await db.delete(
+        tablePeople,
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      return count > 0;
+    } catch (e) {
+      return false;
+    }
+  }
+  
   Future<void> closeDatabase() async {
-    Database db = await database;
+    final db = await database;
     await db.close();
   }
 }

@@ -36,6 +36,7 @@ class PeoplePageState extends State<PeoplePage> {
   }
 
   void _showMaterialBanner() {
+    _clearMaterialBanner();
     ScaffoldMessenger.of(context).showMaterialBanner(MaterialBanner(
         padding: const EdgeInsets.all(16),
         leading: const Icon(Icons.info, color: Colors.black, size: 32),
@@ -52,12 +53,13 @@ class PeoplePageState extends State<PeoplePage> {
   }
 
   void _clearMaterialBanner() {
-    ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+    if (mounted) {
+      ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+    }
   }
 
   @override
   void dispose() {
-    _clearMaterialBanner();
     setState(() {
       Navigator.pop(context);
     });
@@ -65,7 +67,7 @@ class PeoplePageState extends State<PeoplePage> {
   }
 
   Future<void> _fetchPeople() async {
-    List<PersonModel> fetchedUsers = await databaseHelper.getPerson();
+    List<PersonModel> fetchedUsers = await databaseHelper.getAllPersons();
     if (mounted) {
       setState(() {
         _personList = fetchedUsers;
@@ -80,7 +82,7 @@ class PeoplePageState extends State<PeoplePage> {
         _filteredPersonList = _personList;
       } else {
         _filteredPersonList = _personList.where((person) {
-          return person.name.toLowerCase().contains(query.toLowerCase());
+          return person.name!.toLowerCase().contains(query.toLowerCase());
         }).toList();
       }
     });
@@ -88,45 +90,39 @@ class PeoplePageState extends State<PeoplePage> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      onPopInvoked: (pop) {
-        _clearMaterialBanner();
-        pop;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('People'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {
-                showSearch(
-                  context: context,
-                  delegate: _SearchDelegate(_filterList, _personList),
-                );
-              },
-            ),
-          ],
-        ),
-        body: _selectedIndex == 0
-            ? PeopleOverview(personList: _personList)
-            : const AddPersonView(),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: _onItemTapped,
-          destinations: <NavigationDestination>[
-            NavigationDestination(
-              selectedIcon: const Icon(Icons.people),
-              icon: const Icon(Icons.people_alt_outlined),
-              label: 'All People (${_filteredPersonList.length})',
-            ),
-            const NavigationDestination(
-              selectedIcon: Icon(Icons.person_add_rounded),
-              icon: Icon(Icons.person_add_outlined),
-              label: 'Add New',
-            ),
-          ],
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('People'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: _SearchDelegate(_filterList, _personList),
+              );
+            },
+          ),
+        ],
+      ),
+      body: _selectedIndex == 0
+          ? PeopleOverview(personList: _filteredPersonList)
+          : const AddPersonView(),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onItemTapped,
+        destinations: <NavigationDestination>[
+          NavigationDestination(
+            selectedIcon: const Icon(Icons.people),
+            icon: const Icon(Icons.people_alt_outlined),
+            label: 'All People (${_filteredPersonList.length})',
+          ),
+          const NavigationDestination(
+            selectedIcon: Icon(Icons.person_add_rounded),
+            icon: Icon(Icons.person_add_outlined),
+            label: 'Add New',
+          ),
+        ],
       ),
     );
   }
@@ -164,7 +160,7 @@ class _SearchDelegate extends SearchDelegate<String> {
   @override
   Widget buildResults(BuildContext context) {
     final filteredList = _originalPersonList.where((person) {
-      return person.name.toLowerCase().contains(query.toLowerCase());
+      return person.name!.toLowerCase().contains(query.toLowerCase());
     }).toList();
 
     return PeopleOverview(personList: filteredList);
@@ -173,7 +169,7 @@ class _SearchDelegate extends SearchDelegate<String> {
   @override
   Widget buildSuggestions(BuildContext context) {
     final filteredList = _originalPersonList.where((person) {
-      return person.name.toLowerCase().contains(query.toLowerCase());
+      return person.name!.toLowerCase().contains(query.toLowerCase());
     }).toList();
 
     return PeopleOverview(personList: filteredList);

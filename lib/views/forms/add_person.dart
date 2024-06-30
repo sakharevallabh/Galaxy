@@ -18,14 +18,89 @@ class AddPersonView extends StatefulWidget {
 class AddPersonViewState extends State<AddPersonView> {
   final _formKey = GlobalKey<FormState>();
   final logger = Logger();
-  final DatabaseHelper databaseHelper = DatabaseHelper();
+  final DatabaseHelper databaseHelper =
+      DatabaseHelper(); // Update with your actual database helper class
   XFile? _image;
   Uint8List? _photo;
-  final Map<String, dynamic> _formData = {};
+  final Map<String, TextEditingController> _controllers = {
+    'Name': TextEditingController(),
+    'Gender': TextEditingController(),
+    'Date of Birth': TextEditingController(),
+    'Place of Birth': TextEditingController(),
+    'Present Address': TextEditingController(),
+    'Present Pincode': TextEditingController(),
+    'Present Country': TextEditingController(),
+    'Permanent Address': TextEditingController(),
+    'Marital Status': TextEditingController(),
+    'Profession': TextEditingController(),
+    'Relation': TextEditingController(),
+  };
   final List<String> _maritalStatuses = ['Married', 'Unmarried', 'Divorced'];
   final List<String> _gender = ['Male', 'Female'];
+  final List<String> _relations = [
+    'Self',
+    'Friend',
+    'Mother',
+    'Father',
+    'Sister',
+    'Brother',
+    'Son',
+    'Daughter',
+    'Husband',
+    'Wife',
+    'Grandfather',
+    'Grandmother',
+    'Acquaintance',
+    'Relative',
+    'Colleague',
+    'Father In-Law',
+    'Mother In-Law',
+    'Sister In-Law',
+    'Brother In-Law'
+    'Son In-Law',
+    'Daughter In-Law',
+    'Aunt',
+    'Nephew',
+    'Niece',
+    'Uncle'
+  ];
   List<String> _countries = [];
   List<String> _professions = [];
+  final List<String> _interests = [
+    'Reading',
+    'Writing',
+    'Sports',
+    'Music',
+    'Movies',
+    'Travel',
+    'Cooking',
+    'Finance',
+    'Learning',
+    'Blogging',
+    'Content Creation',
+    'Gardening',
+    'Painting',
+    'Nature',
+    'Fitness',
+    'Gaming',
+    'Photography',
+    'Dancing',
+    'Adventure Sports',
+    'Fishing',
+    'Other'
+  ];
+  final List<String> _degrees = [
+    'Graduate',
+    'Bachelor',
+    'Master',
+    'PhD',
+    'Other'
+  ];
+  final List<String> _selectedInterests = [];
+  final List<String> _phoneNumbers = [];
+  final List<String> _emailAddresses = [];
+    final List<String> _links = [];
+  final List<Map<String, String>> _educationDetails = [];
 
   @override
   void initState() {
@@ -34,19 +109,25 @@ class AddPersonViewState extends State<AddPersonView> {
     _fetchProfessions();
   }
 
-  // Controllers for form fields
-  late final Map<String, TextEditingController> _controllers = {
-    'Name': TextEditingController(),
-    'Gender': TextEditingController(),
-    'Date of Birth': TextEditingController(),
-    'Birth Place': TextEditingController(),
-    'Present Address': TextEditingController(),
-    'Present Pincode': TextEditingController(),
-    'Present Country': TextEditingController(),
-    'Permanent Address': TextEditingController(),
-    'Marital Status': TextEditingController(),
-    'Profession': TextEditingController(),
-  };
+  @override
+  void dispose() {
+    _clearForm();
+    _controllers.forEach((key, controller) {
+      controller.dispose();
+    });
+    super.dispose();
+  }
+
+  void _clearForm() {
+    _formKey.currentState!.reset();
+    _controllers.forEach((key, controller) {
+      controller.clear();
+    });
+    setState(() {
+      _image = null;
+      _photo = null;
+    });
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -54,7 +135,6 @@ class AddPersonViewState extends State<AddPersonView> {
     if (pickedFile != null) {
       pickedFile.readAsBytes().then((value) {
         setState(() {
-          //  _image = pickedFile;
           _image = pickedFile;
           _photo = value;
         });
@@ -66,62 +146,39 @@ class AddPersonViewState extends State<AddPersonView> {
 
   void _showSnackBar(String message) {
     if (mounted) {
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
     }
   }
 
-  @override
-  void dispose() {
-    _clearForm();
-    _controllers.forEach((key, controller) {
-      controller.dispose();
-    });
-    setState(() {
-      Navigator.pop(context);
-    });
-    databaseHelper.closeDatabase();
-    super.dispose();
-  }
-
-  void _clearForm() {
-     _formKey.currentState!.reset();
-    _controllers['Name']!.text = "";
-    _controllers['Gender']!.text = "";
-    _controllers['Date of Birth']!.text = "";
-    _controllers['Birth Place']!.text = "";
-    _controllers['Present Address']!.text = "";
-    _controllers['Present Pincode']!.text = "";
-    _controllers['Present Country']!.text = "";
-    _controllers['Permanent Address']!.text = "";
-    _controllers['Marital Status']!.text = "";
-    _controllers['Profession']!.text = "";
-    setState(() {
-      _image = null;
-      _photo = null;
-      _photo!.clear();
-    });
-  }
-
   Future<void> _saveForm() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+
       if (_image != null) {
-        _formData['photo'] = _image!.path;
+        _controllers['Photo']?.text =
+            _image!.path; // Assuming you have a Photo controller
       }
+
       await databaseHelper.insertPerson({
-        'name': _controllers['Name']!.text,
-        'gender': _controllers['Gender']!.text,
-        'dob': _controllers['Date of Birth']!.text,
-        'birthPlace': _controllers['Birth Place']!.text,
-        'presentAddress': _controllers['Present Address']!.text,
-        'presentPincode': _controllers['Present Pincode']!.text,
-        'presentCountry': _controllers['Present Country']!.text,
-        'permanentAddress': _controllers['Permanent Address']!.text,
-        'maritalStatus': _controllers['Marital Status']!.text,
-        'profession': _controllers['Profession']!.text,
+        'name': _controllers['Name']?.text,
+        'gender': _controllers['Gender']?.text,
+        'dob': _controllers['Date of Birth']?.text,
+        'birthPlace': _controllers['Place of Birth']?.text,
+        'presentAddress': _controllers['Present Address']?.text,
+        'presentPincode': _controllers['Present Pincode']?.text,
+        'presentCountry': _controllers['Present Country']?.text,
+        'permanentAddress': _controllers['Permanent Address']?.text,
+        'maritalStatus': _controllers['Marital Status']?.text,
+        'profession': _controllers['Profession']?.text,
+        'relation': _controllers['Relation']?.text,
         'photo': _photo,
+        'interests': jsonEncode(_selectedInterests),
+        'phoneNumbers': jsonEncode(_phoneNumbers),
+        'emailAddresses': jsonEncode(_emailAddresses),
+        'educationDetails': jsonEncode(_educationDetails),
       });
 
       _showSnackBar('Person added successfully!');
@@ -134,24 +191,248 @@ class AddPersonViewState extends State<AddPersonView> {
   }
 
   Future<void> _fetchCountries() async {
-    final String responseContries =
-        await rootBundle.loadString('assets/data/countries.json');
-    await Future.delayed(const Duration(seconds: 1));
+    if (mounted) {
+      final String responseCountries =
+          await rootBundle.loadString('assets/data/countries.json');
+      await Future.delayed(const Duration(seconds: 1));
 
-    setState(() {
-      final List<dynamic> data = jsonDecode(responseContries);
-      _countries = data.map((countries) => countries.toString()).toList();
-    });
+      setState(() {
+        final List<dynamic> data = jsonDecode(responseCountries);
+        _countries = data.map((country) => country.toString()).toList();
+      });
+    }
   }
 
   Future<void> _fetchProfessions() async {
-    final String responseProfessions =
-        await rootBundle.loadString('assets/data/professions.json');
-    await Future.delayed(const Duration(seconds: 1));
+    if (mounted) {
+      final String responseProfessions =
+          await rootBundle.loadString('assets/data/professions.json');
+      await Future.delayed(const Duration(seconds: 1));
+      setState(() {
+        final List<dynamic> data = jsonDecode(responseProfessions);
+        _professions = data.map((profession) => profession.toString()).toList();
+      });
+    }
+  }
+
+  void _addEducationField() {
     setState(() {
-      final List<dynamic> data = jsonDecode(responseProfessions);
-      _professions = data.map((professions) => professions.toString()).toList();
+      _educationDetails.add({});
     });
+  }
+
+  Widget _buildEducationFields() {
+    return Column(
+      children: _educationDetails.map((education) {
+        int index = _educationDetails.indexOf(education);
+        return Column(
+          children: [
+            DropdownButtonFormField<String>(
+              value: education['type'],
+              onChanged: (newValue) {
+                setState(() {
+                  _educationDetails[index]['type'] = newValue!;
+                  // Clear the value when the type changes
+                  _educationDetails[index]['value'] = '';
+                });
+              },
+              items: [
+                'Primary School Name',
+                'Secondary School Name',
+                'College Name',
+                'University Name',
+                'Institute Name',
+                'Course',
+                'Degree',
+              ].map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              decoration: const InputDecoration(labelText: 'Education Type'),
+            ),
+            if (education['type'] == 'Degree')
+              SearchField(
+                controller: TextEditingController(text: education['value']),
+                searchInputDecoration: const InputDecoration(
+                  labelText: 'Degree',
+                ),
+                maxSuggestionsInViewPort: 5,
+                autoCorrect: true,
+                suggestions: _degrees
+                    .map((e) => SearchFieldListItem(e, child: Text(e)))
+                    .toList(),
+                onSuggestionTap: (suggestion) {
+                  setState(() {
+                    _educationDetails[index]['value'] = suggestion.searchKey;
+                  });
+                },
+              )
+            else
+              TextFormField(
+                initialValue: education['value'],
+                onChanged: (newValue) {
+                  setState(() {
+                    _educationDetails[index]['value'] = newValue;
+                  });
+                },
+                decoration: InputDecoration(
+                  labelText: education['type'],
+                ),
+              ),
+            const SizedBox(height: 10),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  void _addPhoneNumber(List<String> phoneNumbers, String type) {
+    setState(() {
+      phoneNumbers.add('');
+    });
+  }
+
+  void _addEmail(List<String> emailAddresses) {
+    setState(() {
+      emailAddresses.add('');
+    });
+  }
+
+   void _addLink(List<String> links) {
+    setState(() {
+      links.add('');
+    });
+  }
+
+  Widget _buildSearchFields(String fieldName, List<String> suggestions) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SearchField(
+          controller: _controllers[fieldName]!,
+          searchInputDecoration: InputDecoration(
+            labelText: fieldName,
+          ),
+          maxSuggestionsInViewPort: 5,
+          autoCorrect: true,
+          suggestions: suggestions
+              .map((e) => SearchFieldListItem(e, child: Text(e)))
+              .toList(),
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  Widget _buildTextFields(String fieldName, [TextInputType keyboardType = TextInputType.text]) {
+    return Column(
+      children: [
+        TextFormField(
+          controller: _controllers[fieldName],
+          keyboardType: keyboardType,
+          decoration: InputDecoration(labelText: fieldName),
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  Widget _buildPhoneNumberFields(String label, List<String> phoneNumbers) {
+    return Column(
+      children: [
+        for (int i = 0; i < phoneNumbers.length; i++)
+          TextFormField(
+            initialValue: phoneNumbers[i],
+            keyboardType: TextInputType.phone,
+            onChanged: (newValue) {
+              setState(() {
+                phoneNumbers[i] = newValue;
+              });
+            },
+            decoration: InputDecoration(
+              labelText: '$label ${i + 1}',
+            ),
+          ),
+        ElevatedButton(
+          onPressed: () => _addPhoneNumber(phoneNumbers, label),
+          child: Text('Add $label'),
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  Widget _buildEmailFields(String label, List<String> emailAddresses) {
+    return Column(
+      children: [
+        for (int i = 0; i < emailAddresses.length; i++)
+          TextFormField(
+            initialValue: emailAddresses[i],
+            keyboardType: TextInputType.emailAddress,
+            onChanged: (newValue) {
+              setState(() {
+                emailAddresses[i] = newValue;
+              });
+            },
+            decoration: InputDecoration(
+              labelText: '$label ${i + 1}',
+            ),
+          ),
+        ElevatedButton(
+          onPressed: () => _addEmail(emailAddresses),
+          child: Text('Add $label'),
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  Widget _buildLinkFields(String label, List<String> userLinks) {
+    return Column(
+      children: [
+        for (int i = 0; i < userLinks.length; i++)
+          TextFormField(
+            initialValue: userLinks[i],
+            keyboardType: TextInputType.url,
+            onChanged: (newValue) {
+              setState(() {
+                userLinks[i] = newValue;
+              });
+            },
+            decoration: InputDecoration(
+              labelText: '$label ${i + 1}',
+            ),
+          ),
+        ElevatedButton(
+          onPressed: () => _addLink(userLinks),
+          child: Text('Add $label'),
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  Widget _buildInterests() {
+    return Wrap(
+      spacing: 8.0,
+      children: _interests.map((interest) {
+        return FilterChip(
+          label: Text(interest),
+          selected: _selectedInterests.contains(interest),
+          onSelected: (bool selected) {
+            setState(() {
+              if (selected) {
+                _selectedInterests.add(interest);
+              } else {
+                _selectedInterests.remove(interest);
+              }
+            });
+          },
+        );
+      }).toList(),
+    );
   }
 
   @override
@@ -162,43 +443,36 @@ class AddPersonViewState extends State<AddPersonView> {
         child: Form(
           key: _formKey,
           child: ListView(
+
             children: [
               GestureDetector(
                 onTap: _pickImage,
                 child: CircleAvatar(
-                  radius: 100,
-                  backgroundImage: _image != null
-                      ? MemoryImage(_photo!)
-                      : const AssetImage('assets/images/placeholder.png')
-                          as ImageProvider,
+                  radius: 90,
+                  backgroundColor: Colors.grey[300],
+                  backgroundImage: _photo != null ? MemoryImage(_photo!) : null,
+                  child: _photo == null
+                      ? const Icon(Icons.person, size: 90)
+                      : null,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               TextFormField(
-                controller: _controllers['Name']!,
-                decoration: const InputDecoration(labelText: 'Name'),
+                controller: _controllers['Name'],
+                keyboardType: TextInputType.name,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter name of the person';
+                    return 'Please enter a name';
                   }
                   return null;
                 },
+                decoration: const InputDecoration(labelText: 'Name'),
               ),
-              const SizedBox(height: 10),
-              SearchField(
-                controller: _controllers['Gender']!,
-                searchInputDecoration: const InputDecoration(
-                  labelText: 'Gender',
-                ),
-                maxSuggestionsInViewPort: 5,
-                autoCorrect: true,
-                suggestions: _gender
-                    .map((e) => SearchFieldListItem(e, child: Text(e)))
-                    .toList(),
-              ),
-              const SizedBox(height: 10),
+              _buildSearchFields('Relation', _relations),
+              _buildSearchFields('Gender', _gender),
               TextFormField(
                 controller: _controllers['Date of Birth']!,
+                // keyboardType: TextInputType.datetime,
                 decoration: const InputDecoration(labelText: 'Date of Birth'),
                 onTap: () async {
                   FocusScope.of(context).requestFocus(FocusNode());
@@ -217,63 +491,26 @@ class AddPersonViewState extends State<AddPersonView> {
                 },
               ),
               const SizedBox(height: 10),
-              TextFormField(
-                controller: _controllers['Birth Place']!,
-                decoration: const InputDecoration(labelText: 'Place of Birth'),
+              _buildTextFields('Place of Birth', TextInputType.text),
+              _buildTextFields('Present Address', TextInputType.text),
+              _buildTextFields('Present Pincode', TextInputType.number),
+              _buildSearchFields('Present Country', _countries),
+              _buildTextFields('Permanent Address', TextInputType.number),
+              _buildSearchFields('Marital Status', _maritalStatuses),
+              _buildSearchFields('Profession', _professions),
+              _buildPhoneNumberFields('Phone Number', _phoneNumbers),
+              _buildEmailFields('Email Address', _emailAddresses),
+              _buildLinkFields('Link', _links),
+              _buildEducationFields(),
+              ElevatedButton(
+                onPressed: _addEducationField,
+                child: const Text('Add Education'),
               ),
               const SizedBox(height: 10),
-              TextFormField(
-                controller: _controllers['Present Address']!,
-                decoration: const InputDecoration(labelText: 'Present Address'),
-              ),
+              const Text('Interests', style: TextStyle(fontSize: 16)),
               const SizedBox(height: 10),
-              TextFormField(
-                controller: _controllers['Present Pincode']!,
-                decoration: const InputDecoration(labelText: 'Present Pincode'),
-              ),
-              const SizedBox(height: 10),
-              SearchField(
-                controller: _controllers['Present Country']!,
-                searchInputDecoration: const InputDecoration(
-                  labelText: 'Present Country',
-                ),
-                maxSuggestionsInViewPort: 5,
-                autoCorrect: true,
-                suggestions: _countries
-                    .map((e) => SearchFieldListItem(e, child: Text(e)))
-                    .toList(),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _controllers['Permanent Address']!,
-                decoration:
-                    const InputDecoration(labelText: 'Permanent Address'),
-              ),
-              const SizedBox(height: 10),
-              SearchField(
-                controller: _controllers['Marital Status']!,
-                searchInputDecoration: const InputDecoration(
-                  labelText: 'Marital Status',
-                ),
-                maxSuggestionsInViewPort: 5,
-                autoCorrect: true,
-                suggestions: _maritalStatuses
-                    .map((e) => SearchFieldListItem(e, child: Text(e)))
-                    .toList(),
-              ),
-              const SizedBox(height: 10),
-              SearchField(
-                controller: _controllers['Profession']!,
-                searchInputDecoration: const InputDecoration(
-                  labelText: 'Profession',
-                ),
-                maxSuggestionsInViewPort: 5,
-                autoCorrect: true,
-                suggestions: _professions
-                    .map((e) => SearchFieldListItem(e, child: Text(e)))
-                    .toList(),
-              ),
-              const SizedBox(height: 100),
+              _buildInterests(),
+              const SizedBox(height: 75),
             ],
           ),
         ),

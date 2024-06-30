@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:galaxy/helpers/people_database_helper.dart';
 import 'package:galaxy/model/person_model.dart';
 import 'package:galaxy/views/details/person_details.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PeopleOverview extends StatefulWidget {
   final List<PersonModel> personList;
 
   const PeopleOverview({super.key, required this.personList});
+
   @override
-  PeopleOverviewPageState createState() => PeopleOverviewPageState();
+  PeopleOverviewState createState() => PeopleOverviewState();
 }
 
-class PeopleOverviewPageState extends State<PeopleOverview> {
+class PeopleOverviewState extends State<PeopleOverview> {
   List<PersonModel> _personList = [];
   DatabaseHelper databaseHelper = DatabaseHelper();
 
@@ -21,17 +23,8 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
     _fetchPeople();
   }
 
-  @override
-  void dispose() {
-    setState(() {
-      Navigator.pop(context);
-    });
-    databaseHelper.closeDatabase();
-    super.dispose();
-  }
-
   Future<void> _fetchPeople() async {
-    List<PersonModel> fetchedUsers = await databaseHelper.getPerson();
+    List<PersonModel> fetchedUsers = await databaseHelper.getAllPersons();
     setState(() {
       _personList = fetchedUsers;
     });
@@ -39,16 +32,13 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
 
   @override
   Widget build(BuildContext context) {
-    _fetchPeople();
     return Scaffold(
       body: _buildPersonList(),
     );
   }
 
   Widget _buildPersonList() {
-    _personList = widget.personList;
-
-    if (widget.personList.isEmpty) {
+    if (_personList.isEmpty) {
       return const Center(
         child: Text('No persons available'),
       );
@@ -60,7 +50,53 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
           return Card(
             child: ListTile(
               leading: _buildAvatar(person),
-              title: Text(person.name),
+              title: Text(person.name!),
+              subtitle: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${person.profession!} '),
+                  if (person.relation != null && person.relation!.isNotEmpty)
+                    Text('(${person.relation!})'),
+                ],
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  (person.emailAddresses != null && person.emailAddresses!.isNotEmpty)
+                      ? IconButton(
+                          icon: const Icon(Icons.email),
+                          onPressed: () {
+                            launch('mailto:${person.emailAddresses![0]}');
+                          },
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.mail_lock_rounded),
+                          onPressed: () {
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(const SnackBar(
+                              content: Text('No email address saved.'),
+                            ));
+                          },
+                        ),
+                  (person.phoneNumbers != null &&
+                          person.phoneNumbers!.isNotEmpty)
+                      ? IconButton(
+                          icon: const Icon(Icons.phone),
+                          onPressed: () {
+                            launch('tel:${person.phoneNumbers![0]}');
+                          },
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.phone_disabled_rounded),
+                          onPressed: () {
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(const SnackBar(
+                              content: Text('No phone number saved.'),
+                            ));
+                          },
+                        ),
+                ],
+              ),
               onTap: () {
                 Navigator.push(
                   context,
@@ -71,8 +107,8 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
                     ),
                   ),
                 ).then((value) {
-                  // Trigger a refresh when coming back from details page
-                  (context as Element).markNeedsBuild();
+                  // Refresh the list when returning from details page
+                  _fetchPeople();
                 });
               },
             ),
@@ -83,10 +119,17 @@ class PeopleOverviewPageState extends State<PeopleOverview> {
   }
 
   Widget _buildAvatar(PersonModel person) {
-    return person.photo != null
-        ? CircleAvatar(
-            backgroundImage: MemoryImage(person.photo!),
-          )
-        : const CircleAvatar(child: Icon(Icons.person));
+    return CircleAvatar(
+      child: person.photo != null
+          ? ClipOval(
+              child: Image.memory(
+                person.photo!,
+                fit: BoxFit.cover,
+                width: 60,
+                height: 60,
+              ),
+            )
+          : const Icon(Icons.person),
+    );
   }
 }

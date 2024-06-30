@@ -1,6 +1,7 @@
   [
     "Accountant",
     "Actor",
+    "Actress",
     "Teacher",
     "Teacher Assistant",
     "Agent",
@@ -912,6 +913,9 @@
     "Terrazzo Finisher",
     "Terrazzo Worker",
     "Tester",
+    "Functional Tester",
+    "Automation Tester",
+    "Performance Tester",
     "Textile Bleaching Operator",
     "Textile Cutting Machine Setter",
     "Textile Knitting Machine Setter",
@@ -996,5 +1000,7 @@
     "Army Soldier",
     "Navy Soldier",
     "Air Force Soldier",
-    "Paramilitary"
+    "Paramilitary",
+    "Fighter",
+    "Boxer"
   ]

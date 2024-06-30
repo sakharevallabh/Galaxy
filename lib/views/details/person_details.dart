@@ -1,21 +1,22 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:galaxy/model/person_model.dart';
 import 'package:galaxy/helpers/people_database_helper.dart';
+import 'package:galaxy/model/person_model.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:logger/logger.dart';
+import 'package:intl/intl.dart';
 import 'package:searchfield/searchfield.dart';
 import 'package:share/share.dart';
-import 'package:intl/intl.dart';
 
 class PersonDetailsPage extends StatefulWidget {
   final PersonModel person;
   final String heroTag;
 
-  const PersonDetailsPage(
-      {super.key, required this.person, required this.heroTag});
+  const PersonDetailsPage({
+    super.key,
+    required this.person,
+    required this.heroTag,
+  });
 
   @override
   PersonDetailsPageState createState() => PersonDetailsPageState();
@@ -23,145 +24,187 @@ class PersonDetailsPage extends StatefulWidget {
 
 class PersonDetailsPageState extends State<PersonDetailsPage> {
   late PersonModel _person;
-  final DatabaseHelper databaseHelper = DatabaseHelper();
-  final List<String> _selectedFields = [];
-  late Map<String, TextEditingController> _controllers;
-  XFile? _image;
-  Uint8List? _photo;
-  final logger = Logger();
-  DateTime? _dob;
-
+  final DatabaseHelper _databaseHelper = DatabaseHelper();
+  final Map<String, String> _selectedFields = {};
+  final Map<String, TextEditingController> _controllers = {};
   final List<String> _genders = ['Male', 'Female'];
   final List<String> _maritalStatuses = ['Married', 'Unmarried', 'Divorced'];
+  final List<String> _relations = [
+    'Self', 'Friend', 'Mother', 'Father', 'Sister', 'Brother', 'Son', 'Daughter', 'Husband', 'Wife', 'Grandfather', 'Grandmother', 'Acquaintance', 'Relative', 'Colleague', 'Father In-Law', 'Mother In-Law', 'Sister In-Law', 'Brother In-Law', 'Son In-Law', 'Daughter In-Law', 'Aunt', 'Nephew', 'Niece', 'Uncle'
+  ];
+  Uint8List? _photo;
+  DateTime? _dob;
   List<String> _countries = [];
   List<String> _professions = [];
-
+  
   @override
   void initState() {
     super.initState();
-    _fetchCountries();
-    _fetchProfessions();
     _person = widget.person;
-    _controllers = {
-      'Name': TextEditingController(text: _person.name),
-      'Gender': TextEditingController(text: _person.gender),
-      'Date of Birth': TextEditingController(text: _person.dob ?? ''),
-      'Age': TextEditingController(),
-      'Birth Place': TextEditingController(text: _person.birthPlace),
-      'Present Address': TextEditingController(text: _person.presentAddress),
-      'Present Country': TextEditingController(text: _person.presentCountry),
-      'Present Pincode': TextEditingController(text: _person.presentPincode),
-      'Permanent Address':
-          TextEditingController(text: _person.permanentAddress),
-      'Marital Status': TextEditingController(text: _person.maritalStatus),
-      'Profession': TextEditingController(text: _person.profession),
-    };
-    _photo = _person.photo;
+    _fetchData();
+    _initializeControllers();
+    if (_person.photo != null && _person.photo!.isNotEmpty) {
+      _photo = _person.photo!;
+    }
     if (_person.dob != null && _person.dob!.isNotEmpty) {
       _dob = DateFormat('yyyy-MM-dd').parse(_person.dob!);
       _controllers['Age']!.text = _calculateAge(_dob!).toString();
     }
   }
 
-  @override
-  void dispose() {
-    _controllers.forEach((key, controller) {
-      controller.dispose();
-    });
-    setState(() {
-      Navigator.pop(context);
-    });
-    databaseHelper.closeDatabase();
-    super.dispose();
+  Future<void> _fetchData() async {
+    await _fetchCountries();
+    await _fetchProfessions();
+  }
+
+  void _initializeControllers() {
+    _addController('Name', _person.name);
+    _addController('Relation', _person.relation ?? '');
+    _addController('Gender', _person.gender ?? '');
+    _addController('Date of Birth', _person.dob ?? '');
+    _addController('Age');
+    _addController('Place of Birth', _person.birthPlace ?? '');
+    _addController('Present Address', _person.presentAddress ?? '');
+    _addController('Present Country', _person.presentCountry ?? '');
+    _addController('Present Pincode', _person.presentPincode ?? '');
+    _addController('Permanent Address', _person.permanentAddress ?? '');
+    _addController('Marital Status', _person.maritalStatus ?? '');
+    _addController('Profession', _person.profession ?? '');
+
+    // Initialize controllers for dynamic fields based on lists
+    _initializeListControllers('Phone Number', _person.phoneNumbers);
+    _initializeListControllers('Email Address', _person.emailAddresses);
+    _initializeListControllers('Link', _person.links);
+    _initializeEducationControllers(_person.educationDetails);
+
+    // Initialize Interests controller
+    _controllers['Interests'] =
+        TextEditingController(text: _person.interests?.join(', ') ?? '');
+  }
+
+  void _addController(String key, [String? value]) {
+    if (!_controllers.containsKey(key)) {
+      _controllers[key] = TextEditingController(text: value);
+    }
+  }
+
+  void _initializeListControllers(String labelPrefix, List<String>? items) {
+    if (items != null) {
+      for (int i = 0; i < items.length; i++) {
+        _addController('$labelPrefix ${i + 1}', items[i]);
+      }
+    }
+  }
+
+  void _initializeEducationControllers(
+      List<Map<String, dynamic>>? educationDetails) {
+    if (educationDetails != null) {
+      for (int i = 0; i < educationDetails.length; i++) {
+        var educationDetail = educationDetails[i];
+        _addController(educationDetail['type'], educationDetail['value']);
+      }
+    }
   }
 
   Future<void> _updatePerson() async {
-    PersonModel personUpdated = PersonModel(
-      id: _person.id,
-      photo: _photo,
-      name: _controllers['Name']!.text,
-      gender: _controllers['Gender']!.text,
-      dob: _controllers['Date of Birth']!.text,
-      birthPlace: _controllers['Birth Place']!.text,
-      presentAddress: _controllers['Present Address']!.text,
-      presentPincode: _controllers['Present Pincode']!.text,
-      presentCountry: _controllers['Present Country']!.text,
-      permanentAddress: _controllers['Permanent Address']!.text,
-      maritalStatus: _controllers['Marital Status']!.text,
-      profession: _controllers['Profession']!.text,
-    );
-    await databaseHelper.updatePerson(personUpdated);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Details updated successfully!')),
-      );
-      // Navigator.pop(context, true); // Indicate that an update has occurred
-    }
-  }
+    // Collect updated phone numbers from the controllers
+    List<String> updatedPhoneNumbers = [];
+    _controllers.forEach((key, value) {
+      if (key.startsWith('Phone')) {
+        _addController(key, value.text);
+        updatedPhoneNumbers.add(value.text);
+      }
+    });
 
-  Future<void> _deletePerson() async {
-    await databaseHelper.deletePerson(_person.id!);
-    if (mounted) {
-      Navigator.pop(context, true);
-    }
-  }
+    // Similarly, collect updated email addresses
+    List<String> updatedEmailAddresses = [];
+    _controllers.forEach((key, value) {
+      if (key.startsWith('Email')) {
+        _addController(key, value.text);
+        updatedEmailAddresses.add(value.text);
+      }
+    });
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      pickedFile.readAsBytes().then((value) {
-        setState(() {
-          _image = pickedFile;
-          _photo = value;
+    // Similarly, collect updated links
+    List<String> updatedLinks = [];
+    _controllers.forEach((key, value) {
+      if (key.startsWith('Link')) {
+        _addController(key, value.text);
+        updatedLinks.add(value.text);
+      }
+    });
+
+    // Similarly, collect updated education details
+    List<Map<String, String>> updatedEducationDetails = [];
+    _controllers.forEach((key, controller) {
+      if (key.startsWith('Education')) {
+        updatedEducationDetails.add({
+          'type': key.replaceFirst('Education ', ''),
+          'value': controller.text,
         });
-      }).catchError((error) {
-        logger.d('Error reading image: $error');
-      });
+      }
+    });
+
+    final Map<String, dynamic> updatedData = {
+      'name': _controllers['Name']!.text,
+      'relation': _controllers['Relation']!.text,
+      'gender': _controllers['Gender']!.text,
+      'dob': _controllers['Date of Birth']!.text,
+      'birthPlace': _controllers['Place of Birth']!.text,
+      'presentAddress': _controllers['Present Address']!.text,
+      'presentCountry': _controllers['Present Country']!.text,
+      'presentPincode': _controllers['Present Pincode']!.text,
+      'permanentAddress': _controllers['Permanent Address']!.text,
+      'maritalStatus': _controllers['Marital Status']!.text,
+      'profession': _controllers['Profession']!.text,
+      'phoneNumbers': _toJsonList(updatedPhoneNumbers),
+      'emailAddresses': _toJsonList(updatedEmailAddresses),
+      'links': _toJsonList(updatedLinks),
+      'educationDetails': _toJsonList(updatedEducationDetails),
+      'interests': _toJsonList(_person.interests),
+      'photo': _photo,
+    };
+
+    try {
+      await _databaseHelper.updatePerson(_person.id!, updatedData);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Details updated successfully!')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating details: $error')),
+        );
+      }
     }
+  }
+
+  String? _toJsonList(List<dynamic>? items) {
+    if (items != null) {
+      var jsonEncoder = const JsonEncoder();
+      return jsonEncoder.convert(items);
+    }
+    return null;
   }
 
   void _toggleFieldSelection(String fieldName) {
     setState(() {
-      if (_selectedFields.contains(fieldName)) {
-        _selectedFields.remove(fieldName);
-      } else {
-        _selectedFields.add(fieldName);
-      }
+      _selectedFields.containsKey(fieldName)
+          ? _selectedFields.remove(fieldName)
+          : _selectedFields[fieldName] = _controllers[fieldName]?.text ?? '';
     });
   }
 
-  void _shareSelectedFields() {
-    final selectedData = _selectedFields.map((field) {
-      switch (field) {
-        case 'Name':
-          return 'Name: ${_person.name}';
-        case 'Gender':
-          return 'Gender: ${_person.gender}';
-        case 'Date of Birth':
-          return 'Date of Birth: ${_person.dob}';
-        case 'Age':
-          return 'Age: ${_controllers['Age']!.text}';
-        case 'Birth Place':
-          return 'Birth Place: ${_person.birthPlace}';
-        case 'Present Address':
-          return 'Present Address: ${_person.presentAddress}';
-        case 'Present Pincode':
-          return 'Present Pincode: ${_person.presentPincode}';
-        case 'PResent Country':
-          return 'Present Country: ${_person.presentCountry}';
-        case 'Permanent Address':
-          return 'Permanent Address: ${_person.permanentAddress}';
-        case 'Marital Status':
-          return 'Marital Status: ${_person.maritalStatus}';
-        case 'Profession':
-          return 'Profession: ${_person.profession}';
-        default:
-          return '';
-      }
-    }).join('\n');
-
-    Share.share(selectedData);
+  int _calculateAge(DateTime birthDate) {
+    DateTime today = DateTime.now();
+    int age = today.year - birthDate.year;
+    if (today.month < birthDate.month ||
+        (today.month == birthDate.month && today.day < birthDate.day)) {
+      age--;
+    }
+    return age;
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -181,35 +224,44 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     }
   }
 
-  Future<void> _fetchCountries() async {
-    final String responseContries =
-        await rootBundle.loadString('assets/data/countries.json');
-    await Future.delayed(const Duration(seconds: 1));
-
-    setState(() {
-      final List<dynamic> data = jsonDecode(responseContries);
-      _countries = data.map((countries) => countries.toString()).toList();
-    });
-  }
-
-  Future<void> _fetchProfessions() async {
-    final String responseProfessions =
-        await rootBundle.loadString('assets/data/professions.json');
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {
-      final List<dynamic> data = jsonDecode(responseProfessions);
-      _professions = data.map((professions) => professions.toString()).toList();
-    });
-  }
-
-  int _calculateAge(DateTime dob) {
-    final now = DateTime.now();
-    int age = now.year - dob.year;
-    if (now.month < dob.month ||
-        (now.month == dob.month && now.day < dob.day)) {
-      age--;
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    try {
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        pickedFile.readAsBytes().then((value) {
+          setState(() {
+            _photo = value;
+          });
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $error')),
+        );
+      }
     }
-    return age;
+  }
+
+  Future<bool> _deletePerson(int personId) async {
+    try {
+      final bool success = await _databaseHelper.deletePerson(personId);
+      return success;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  void _shareSelectedFields() {
+    String details = generateShareableDetails(_selectedFields);
+    Share.share(details);
+  }
+
+  String generateShareableDetails(Map<String, String> fields) {
+    return fields.entries
+        .map((entry) => '${entry.key}: ${entry.value}')
+        .join('\n');
   }
 
   @override
@@ -220,7 +272,47 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
-            onPressed: _deletePerson,
+            onPressed: () async {
+              final personId = _person.id!;
+              bool success;
+
+              success = await showDialog(
+                context: context,
+                builder: (BuildContext context) => AlertDialog(
+                  title: const Text('Confirm Delete'),
+                  content: const Text(
+                      'Are you sure you want to delete this person?'),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('Cancel'),
+                      onPressed: () {
+                        Navigator.of(context).pop(false);
+                      },
+                    ),
+                    TextButton(
+                      child: const Text('Delete'),
+                      onPressed: () async {
+                        bool result = await _deletePerson(personId);
+                        Navigator.of(context).pop(result);
+                      },
+                    ),
+                  ],
+                ),
+              );
+
+              if (success) {
+                if (mounted) {
+                  Navigator.of(context).pop();
+                }
+              } else {
+                // Handle deletion failure
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Failed to delete person.'),
+                  ),
+                );
+              }
+            },
           ),
         ],
       ),
@@ -240,51 +332,45 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
+            children: [
               Hero(
-                tag: 'person_image_${widget.person.id}',
+                tag: widget.heroTag,
                 child: GestureDetector(
                   onTap: _pickImage,
                   child: CircleAvatar(
-                    radius: 100,
-                    backgroundImage: _image != null
-                        ? FileImage(File(_image!.path))
-                        : widget.person.photo != null
-                            ? MemoryImage(widget.person.photo!)
-                            : const AssetImage('assets/images/placeholder.png')
-                                as ImageProvider,
+                    radius: 90,
+                    backgroundColor: Colors.grey[300],
+                    backgroundImage:
+                        _photo != null ? MemoryImage(_photo!) : null,
+                    child: _photo == null
+                        ? const Icon(Icons.person, size: 90)
+                        : null,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              Hero(
-                tag: widget.heroTag,
-                child: _buildEditableField('Name', _controllers['Name']!),
-              ),
-              _buildSearchableField(
-                  'Gender', _controllers['Gender']!, _genders),
-              _buildDatePickerField(
-                  'Date of Birth', _controllers['Date of Birth']!),
-              _buildEditableField('Age', _controllers['Age']!),
-              _buildEditableField('Birth Place', _controllers['Birth Place']!),
-              _buildEditableField(
-                  'Present Address', _controllers['Present Address']!),
-              _buildSearchableField('Present Country',
-                  _controllers['Present Country']!, _countries),
-              _buildEditableField(
-                  'Present Pincode', _controllers['Present Pincode']!),
-              _buildEditableField(
-                  'Permanent Address', _controllers['Permanent Address']!),
-              _buildSearchableField('Marital Status',
-                  _controllers['Marital Status']!, _maritalStatuses),
-              _buildSearchableField(
-                  'Profession', _controllers['Profession']!, _professions),
-              const SizedBox(height: 100),
+              _buildEditableField('Name'),
+              _buildSearchableField('Relation', _relations),
+              _buildSearchableField('Gender', _genders),
+              _buildDatePickerField('Date of Birth'),
+              _buildEditableField('Age'),
+              _buildEditableField('Place of Birth'),
+              _buildEditableField('Present Address'),
+              _buildSearchableField('Present Country', _countries),
+              _buildEditableField('Present Pincode', TextInputType.number),
+              _buildEditableField('Permanent Address'),
+              _buildSearchableField('Marital Status', _maritalStatuses),
+              _buildSearchableField('Profession', _professions),
+              _buildNewFields(
+                  'Phone Number', _person.phoneNumbers!, TextInputType.phone),
+              _buildNewFields('Email Address', _person.emailAddresses!,
+                  TextInputType.emailAddress),
+              _buildNewFields('Link', _person.links!, TextInputType.url),
+              _buildDynamicEducationFields(_person.educationDetails),
+              _buildMultiSelectField('Interests', _person.interests!),
             ],
           ),
         ),
@@ -292,8 +378,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     );
   }
 
-  Widget _buildEditableField(
-      String fieldName, TextEditingController controller) {
+  Widget _buildEditableField(String fieldName,
+      [TextInputType keyboardType = TextInputType.text]) {
     return GestureDetector(
       onTap: () => _toggleFieldSelection(fieldName),
       child: Container(
@@ -301,8 +387,9 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           border: Border.all(
-            color:
-                _selectedFields.contains(fieldName) ? Colors.blue : Colors.grey,
+            color: _selectedFields.containsKey(fieldName)
+                ? Colors.blue
+                : Colors.grey,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -315,47 +402,15 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             TextFormField(
-              controller: controller,
+              controller: _controllers[fieldName],
               readOnly: fieldName == 'Age',
               decoration: InputDecoration(
                 hintText: 'Enter $fieldName',
               ),
+              keyboardType: keyboardType,
               onChanged: (value) {
                 setState(() {
-                  switch (fieldName) {
-                    case 'Name':
-                      _person.name = value;
-                      break;
-                    case 'Gender':
-                      _person.gender = value;
-                      break;
-                    case 'Date of Birth':
-                      _person.dob = value.isNotEmpty ? value : null;
-                      break;
-                    case 'Birth Place':
-                      _person.birthPlace = value;
-                      break;
-                    case 'Present Address':
-                      _person.presentAddress = value;
-                      break;
-                    case 'Present Country':
-                      _person.presentCountry = value;
-                      break;
-                    case 'Present Pincode':
-                      _person.presentPincode = value;
-                      break;
-                    case 'Permanent Address':
-                      _person.permanentAddress = value;
-                      break;
-                    case 'Marital Status':
-                      _person.maritalStatus = value;
-                      break;
-                    case 'Profession':
-                      _person.profession = value;
-                      break;
-                    default:
-                      break;
-                  }
+                  _controllers[fieldName]?.text = value;
                 });
               },
             ),
@@ -365,8 +420,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     );
   }
 
-  Widget _buildSearchableField(String fieldName,
-      TextEditingController controller, List<String> suggestions) {
+  Widget _buildDatePickerField(String fieldName) {
     return GestureDetector(
       onTap: () => _toggleFieldSelection(fieldName),
       child: Container(
@@ -374,8 +428,45 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           border: Border.all(
-            color:
-                _selectedFields.contains(fieldName) ? Colors.blue : Colors.grey,
+            color: _selectedFields.containsKey(fieldName)
+                ? Colors.blue
+                : Colors.grey,
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              fieldName,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextFormField(
+              controller: _controllers[fieldName],
+              readOnly: true,
+              decoration: InputDecoration(
+                hintText: 'Enter $fieldName',
+              ),
+              onTap: () => _selectDate(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchableField(String fieldName, List<String> suggestions) {
+    return GestureDetector(
+      onTap: () => _toggleFieldSelection(fieldName),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: _selectedFields.containsKey(fieldName)
+                ? Colors.blue
+                : Colors.grey,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -388,31 +479,21 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             SearchField(
-              controller: controller,
-              suggestions:
-                  suggestions.map((e) => SearchFieldListItem(e)).toList(),
+              controller: _controllers.putIfAbsent(
+                  fieldName, () => TextEditingController()),
+              suggestions: suggestions
+                  .where((suggestion) => suggestion
+                      .toLowerCase()
+                      .contains(_controllers[fieldName]!.text.toLowerCase()))
+                  .map((e) => SearchFieldListItem(e))
+                  .toList(),
               searchInputDecoration: InputDecoration(
                 hintText: 'Enter $fieldName',
               ),
               maxSuggestionsInViewPort: 5,
               onSearchTextChanged: (value) {
                 setState(() {
-                  switch (fieldName) {
-                    case 'Gender':
-                      _person.gender = value;
-                      break;
-                    case 'Present Country':
-                      _person.presentCountry = value;
-                      break;
-                    case 'Marital Status':
-                      _person.maritalStatus = value;
-                      break;
-                    case 'Profession':
-                      _person.profession = value;
-                      break;
-                    default:
-                      break;
-                  }
+                  _controllers[fieldName]!.text = value;
                 });
                 return null;
               },
@@ -423,39 +504,147 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     );
   }
 
-  Widget _buildDatePickerField(
-      String fieldName, TextEditingController controller) {
-    return GestureDetector(
-      onTap: () => _toggleFieldSelection(fieldName),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color:
-                _selectedFields.contains(fieldName) ? Colors.blue : Colors.grey,
-            width: 2,
+  Widget _buildMultiSelectField(String label, List<String> selectedItems) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16.0),
           ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              fieldName,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+          Wrap(
+            children: selectedItems.map((item) {
+              return Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Chip(
+                  label: Text(item),
+                  deleteIcon: const Icon(Icons.close),
+                  onDeleted: () {
+                    setState(() {
+                      selectedItems.remove(item);
+                      _controllers[label]!.text = selectedItems.join(', ');
+                    });
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _controllers[label],
+            decoration: InputDecoration(
+              labelText: 'Add $label',
+              border: const OutlineInputBorder(),
             ),
-            TextFormField(
-              controller: controller,
-              readOnly: true,
-              decoration: InputDecoration(
-                hintText: 'Enter $fieldName',
-              ),
-              onTap: () => _selectDate(context),
-            ),
-          ],
-        ),
+            onSubmitted: (value) {
+              if (value.isNotEmpty) {
+                setState(() {
+                  selectedItems.add(value);
+                  _controllers[label]!.text = selectedItems.join(', ');
+                });
+              }
+            },
+          ),
+        ],
       ),
     );
+  }
+
+  void _addPhoneNumber(List<String> phoneNumbers) {
+    setState(() {
+      phoneNumbers.add('');
+      // _controllers.forEach((key, controller) {
+      //   if (key.startsWith('Phone Number')) {
+      // _controllers['Phone Number ${phoneNumbers.length + 1}'] = TextEditingController();
+        // }
+      // });
+    });
+  }
+
+  void _addEmail(List<String> emailAddresses) {
+    setState(() {
+      emailAddresses.add('');
+      // _controllers['Email Address ${emailAddresses.length + 1}'] = TextEditingController();
+    });
+  }
+
+  void _addLink(List<String> links) {
+    setState(() {
+      links.add('');
+      // _controllers['Link ${links.length + 1}'] = TextEditingController();
+    });
+  }
+
+  Widget _buildNewFields(
+      String label, List<String> items, TextInputType keyboardType) {
+    return Column(
+      children: [
+        if (items.isNotEmpty)
+          _buildDynamicListFields(label, items, keyboardType),
+        ElevatedButton(
+          onPressed: () {
+            switch (label) {
+              case 'Phone Number':
+                _addPhoneNumber(items);
+                break;
+              case 'Email Address':
+                _addEmail(items);
+                break;
+              case 'Link':
+                _addLink(items);
+                break;
+              default:
+                break;
+            }
+          },
+          child: Text('Add $label'),
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  Widget _buildDynamicListFields(
+      String labelPrefix, List<String>? items, TextInputType keyboardType) {
+    List<Widget> fields = [];
+    if (items != null) {
+      for (int i = 0; i < items.length; i++) {
+        fields.add(_buildEditableField('$labelPrefix ${i + 1}', keyboardType));
+      }
+    }
+    return Column(children: fields);
+  }
+
+  Widget _buildDynamicEducationFields(
+      List<Map<String, dynamic>>? educationDetails) {
+    List<Widget> fields = [];
+
+    if (educationDetails != null) {
+      for (int i = 0; i < educationDetails.length; i++) {
+        var educationDetail = educationDetails[i];
+        fields.add(_buildEditableField(educationDetail['type']));
+      }
+    }
+    return Column(children: fields);
+  }
+
+  Future<void> _fetchCountries() async {
+    final String responseCountries =
+        await rootBundle.loadString('assets/data/countries.json');
+    final List<dynamic> data = jsonDecode(responseCountries);
+    setState(() {
+      _countries = data.map((countries) => countries.toString()).toList();
+    });
+  }
+
+  Future<void> _fetchProfessions() async {
+    final String responseProfessions =
+        await rootBundle.loadString('assets/data/professions.json');
+    final List<dynamic> data = jsonDecode(responseProfessions);
+    setState(() {
+      _professions = data.map((professions) => professions.toString()).toList();
+    });
   }
 }
