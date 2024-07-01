@@ -38,18 +38,19 @@ class PeoplePageState extends State<PeoplePage> {
   void _showMaterialBanner() {
     _clearMaterialBanner();
     ScaffoldMessenger.of(context).showMaterialBanner(MaterialBanner(
-        padding: const EdgeInsets.all(16),
-        leading: const Icon(Icons.info, color: Colors.black, size: 32),
-        backgroundColor: Colors.white,
-        content: const Text(
-            'All details are stored on your phone or cloud of your choice and not on our servers.'),
-        actions: <Widget>[
-          TextButton(
-            child: const Text('OK'),
-            onPressed: () =>
-                ScaffoldMessenger.of(context).hideCurrentMaterialBanner(),
-          )
-        ]));
+      padding: const EdgeInsets.all(16),
+      leading: const Icon(Icons.info, color: Colors.black, size: 32),
+      backgroundColor: Colors.white,
+      content: const Text(
+          'All details are stored on your phone or cloud of your choice and not on our servers.'),
+      actions: <Widget>[
+        TextButton(
+          child: const Text('OK'),
+          onPressed: () =>
+              ScaffoldMessenger.of(context).hideCurrentMaterialBanner(),
+        )
+      ],
+    ));
   }
 
   void _clearMaterialBanner() {
@@ -60,9 +61,6 @@ class PeoplePageState extends State<PeoplePage> {
 
   @override
   void dispose() {
-    setState(() {
-      Navigator.pop(context);
-    });
     super.dispose();
   }
 
@@ -77,15 +75,16 @@ class PeoplePageState extends State<PeoplePage> {
   }
 
   void _filterList(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filteredPersonList = _personList;
-      } else {
-        _filteredPersonList = _personList.where((person) {
-          return person.name!.toLowerCase().contains(query.toLowerCase());
-        }).toList();
-      }
-    });
+    if (query.isEmpty) {
+      _filteredPersonList = _personList;
+    } else {
+      final lowerCaseQuery = query.toLowerCase();
+      _filteredPersonList = _personList.where((person) {
+        return person.name!.toLowerCase().contains(lowerCaseQuery) ||
+            person.relation!.toLowerCase().contains(lowerCaseQuery) ||
+            person.profession!.toLowerCase().contains(lowerCaseQuery);
+      }).toList();
+    }
   }
 
   @override
@@ -99,7 +98,7 @@ class PeoplePageState extends State<PeoplePage> {
             onPressed: () {
               showSearch(
                 context: context,
-                delegate: _SearchDelegate(_filterList, _personList),
+                delegate: PeopleSearchDelegate(_filterList, _personList),
               );
             },
           ),
@@ -128,11 +127,11 @@ class PeoplePageState extends State<PeoplePage> {
   }
 }
 
-class _SearchDelegate extends SearchDelegate<String> {
-  final Function(String) _filterCallback;
-  final List<PersonModel> _originalPersonList;
+class PeopleSearchDelegate extends SearchDelegate<String> {
+  final Function(String) filterCallback;
+  final List<PersonModel> personList;
 
-  _SearchDelegate(this._filterCallback, this._originalPersonList);
+  PeopleSearchDelegate(this.filterCallback, this.personList);
 
   @override
   List<Widget> buildActions(BuildContext context) {
@@ -141,7 +140,7 @@ class _SearchDelegate extends SearchDelegate<String> {
         icon: const Icon(Icons.clear),
         onPressed: () {
           query = '';
-          _filterCallback(query);
+          filterCallback(query);
         },
       ),
     ];
@@ -159,19 +158,28 @@ class _SearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildResults(BuildContext context) {
-    final filteredList = _originalPersonList.where((person) {
-      return person.name!.toLowerCase().contains(query.toLowerCase());
+    final filteredList = personList.where((person) {
+      final lowerCaseQuery = query.toLowerCase();
+      return person.name!.toLowerCase().contains(lowerCaseQuery) ||
+          person.relation!.toLowerCase().contains(lowerCaseQuery) ||
+          person.profession!.toLowerCase().contains(lowerCaseQuery);
     }).toList();
 
+    // Call the filterCallback function from PeoplePage to update state
+    WidgetsBinding.instance.addPostFrameCallback((_) => filterCallback(query));
     return PeopleOverview(personList: filteredList);
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final filteredList = _originalPersonList.where((person) {
-      return person.name!.toLowerCase().contains(query.toLowerCase());
+    final filteredList = personList.where((person) {
+      final lowerCaseQuery = query.toLowerCase();
+      return person.name!.toLowerCase().contains(lowerCaseQuery) ||
+          person.relation!.toLowerCase().contains(lowerCaseQuery) ||
+          person.profession!.toLowerCase().contains(lowerCaseQuery);
     }).toList();
-
+    // Call the filterCallback function from PeoplePage to update state
+    WidgetsBinding.instance.addPostFrameCallback((_) => filterCallback(query));
     return PeopleOverview(personList: filteredList);
   }
 }

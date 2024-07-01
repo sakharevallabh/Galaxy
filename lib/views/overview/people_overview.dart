@@ -32,13 +32,16 @@ class PeopleOverviewState extends State<PeopleOverview> {
 
   @override
   Widget build(BuildContext context) {
+    _fetchPeople();
     return Scaffold(
       body: _buildPersonList(),
     );
   }
 
   Widget _buildPersonList() {
-    if (_personList.isEmpty) {
+    _personList = widget.personList;
+
+    if (widget.personList.isEmpty) {
       return const Center(
         child: Text('No persons available'),
       );
@@ -54,7 +57,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${person.profession!} '),
+                  Text(person.profession!),
                   if (person.relation != null && person.relation!.isNotEmpty)
                     Text('(${person.relation!})'),
                 ],
