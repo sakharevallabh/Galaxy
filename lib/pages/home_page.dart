@@ -25,6 +25,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _addCounter = 0;
   int _shareCounter = 0;
+  // int _currentPageIndex = 0;
   late PageController _pageController = PageController();
   List<String> peopleCarouselImage = ['assets/images/People_Carousel_1.jpeg'];
   List<String> documentsCarouselImage = [
@@ -49,34 +50,42 @@ class _MyHomePageState extends State<MyHomePage> {
   ];
   String randomString = "";
   List<GlobalKey<FlipCardState>> cardKeys =
-      List.generate(8, (index) => GlobalKey<FlipCardState>());
+  List.generate(8, (index) => GlobalKey<FlipCardState>());
   List<Timer?> timers = List.generate(8, (index) => null);
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
-
-    // Initialize timers with different durations
-    for (int i = 0; i < 8; i++) {
-      int duration = Random().nextInt(30) + 8;
-      timers[i] = Timer.periodic(Duration(seconds: duration), (Timer t) {
-        if (mounted) {
-          if (i < cardKeys.length) {
-            cardKeys[i].currentState?.toggleCard();
-          }
-        }
-      });
-    }
+    
+    // Start timers for flipping logic
+    _startTimers();
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _cancelTimers();
+    super.dispose();
+  }
+
+  void _startTimers() {
+    for (int i = 0; i < timers.length; i++) {
+      int duration = Random().nextInt(30) + 8;
+      timers[i] = Timer.periodic(Duration(seconds: duration), (Timer t) {
+        if (mounted) {
+          cardKeys[i].currentState?.toggleCard();
+        } else {
+          t.cancel();
+        }
+      });
+    }
+  }
+
+  void _cancelTimers() {
     for (var timer in timers) {
       timer?.cancel();
     }
-    super.dispose();
   }
 
   String getRandomString(List<String> strings) {

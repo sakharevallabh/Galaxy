@@ -15,6 +15,7 @@ class PeopleOverview extends StatefulWidget {
 
 class PeopleOverviewState extends State<PeopleOverview> {
   List<PersonModel> _personList = [];
+  List<PersonModel> fetchedUsers = [];
   DatabaseHelper databaseHelper = DatabaseHelper();
 
   @override
@@ -24,7 +25,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
   }
 
   Future<void> _fetchPeople() async {
-    List<PersonModel> fetchedUsers = await databaseHelper.getAllPersons();
+    fetchedUsers = await databaseHelper.getAllPersons();
     setState(() {
       _personList = fetchedUsers;
     });
@@ -32,22 +33,25 @@ class PeopleOverviewState extends State<PeopleOverview> {
 
   @override
   Widget build(BuildContext context) {
-    _fetchPeople();
+    // _fetchPeople();
     return Scaffold(
       body: _buildPersonList(),
     );
   }
 
   Widget _buildPersonList() {
-    _personList = widget.personList;
-
-    if (widget.personList.isEmpty) {
+    if (_personList.isEmpty) {
       return const Center(
         child: Text('No persons available'),
       );
     } else {
+      if (fetchedUsers.isEmpty) {
+        fetchedUsers = _personList;
+      } else {
+        fetchedUsers = widget.personList;
+      }
       return ListView.builder(
-        itemCount: _personList.length,
+        itemCount: fetchedUsers.length,
         itemBuilder: (context, index) {
           PersonModel person = _personList[index];
           return Card(
@@ -65,7 +69,8 @@ class PeopleOverviewState extends State<PeopleOverview> {
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  (person.emailAddresses != null && person.emailAddresses!.isNotEmpty)
+                  (person.emailAddresses != null &&
+                          person.emailAddresses!.isNotEmpty)
                       ? IconButton(
                           icon: const Icon(Icons.email),
                           onPressed: () {
