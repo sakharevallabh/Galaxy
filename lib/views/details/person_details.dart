@@ -554,26 +554,22 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
 
   void _addPhoneNumber(List<String> phoneNumbers) {
     setState(() {
+      _addController('Phone Number ${phoneNumbers.length + 1}', '');
       phoneNumbers.add('');
-      // _controllers.forEach((key, controller) {
-      //   if (key.startsWith('Phone Number')) {
-      // _controllers['Phone Number ${phoneNumbers.length + 1}'] = TextEditingController();
-        // }
-      // });
     });
   }
 
   void _addEmail(List<String> emailAddresses) {
     setState(() {
+      _addController('Email Address ${emailAddresses.length + 1}', '');
       emailAddresses.add('');
-      // _controllers['Email Address ${emailAddresses.length + 1}'] = TextEditingController();
     });
   }
 
   void _addLink(List<String> links) {
     setState(() {
+      _addController('Link ${links.length + 1}', '');
       links.add('');
-      // _controllers['Link ${links.length + 1}'] = TextEditingController();
     });
   }
 
