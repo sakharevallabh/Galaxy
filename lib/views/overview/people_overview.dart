@@ -51,7 +51,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
             child: ListTile(
               leading: _buildAvatar(person),
               title: Text(person.name!),
-              subtitle: Row(
+              subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('${person.profession!} '),
