@@ -3,6 +3,7 @@ import 'package:galaxy/helpers/people_database_helper.dart';
 import 'package:galaxy/model/person_model.dart';
 import 'package:galaxy/views/overview/people_overview.dart';
 import 'package:galaxy/views/forms/add_person.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PeoplePage extends StatefulWidget {
   const PeoplePage({super.key});
@@ -13,7 +14,7 @@ class PeoplePage extends StatefulWidget {
 
 class PeoplePageState extends State<PeoplePage> {
   int _selectedIndex = 0;
-  List<PersonModel> _personList = [];
+  final ValueNotifier<List<PersonModel>> _personListNotifier = ValueNotifier([]);
   List<PersonModel> _filteredPersonList = [];
   DatabaseHelper databaseHelper = DatabaseHelper();
 
@@ -21,7 +22,7 @@ class PeoplePageState extends State<PeoplePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showMaterialBanner();
+      _checkAndShowBanner();
     });
     _fetchPeople();
   }
@@ -30,7 +31,18 @@ class PeoplePageState extends State<PeoplePage> {
     setState(() {
       _selectedIndex = index;
     });
-    _fetchPeople();
+    if (index == 0) {
+      _fetchPeople();
+    }
+  }
+
+  Future<void> _checkAndShowBanner() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool bannerShown = prefs.getBool('bannerShown') ?? false;
+    if (!bannerShown) {
+      _showMaterialBanner();
+      await prefs.setBool('bannerShown', true);
+    }
   }
 
   void _showMaterialBanner() {
@@ -59,28 +71,30 @@ class PeoplePageState extends State<PeoplePage> {
 
   @override
   void dispose() {
+    _personListNotifier.dispose();
     super.dispose();
   }
 
-  Future<List<PersonModel>> _fetchPeople() async {
-    return await databaseHelper.getAllPersons();
+  void _fetchPeople() async {
+    List<PersonModel> fetchedUsers = await databaseHelper.getAllPersons();
+    if (mounted) {
+      _personListNotifier.value = fetchedUsers;
+      _filteredPersonList = fetchedUsers;
+    }
   }
 
   void _filterList(String query) {
     if (query.isEmpty) {
-      setState(() {
-        _filteredPersonList = _personList;
-      });
+      _filteredPersonList = _personListNotifier.value;
     } else {
       final lowerCaseQuery = query.toLowerCase();
-      setState(() {
-        _filteredPersonList = _personList.where((person) {
-          return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
-              (person.relation?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
-              (person.profession?.toLowerCase().contains(lowerCaseQuery) ?? false);
-        }).toList();
-      });
+      _filteredPersonList = _personListNotifier.value.where((person) {
+        return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
+            (person.relation?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
+            (person.profession?.toLowerCase().contains(lowerCaseQuery) ?? false);
+      }).toList();
     }
+    _personListNotifier.notifyListeners();
   }
 
   @override
@@ -94,46 +108,86 @@ class PeoplePageState extends State<PeoplePage> {
             onPressed: () {
               showSearch(
                 context: context,
-                delegate: PeopleSearchDelegate(_filterList, _personList),
+                delegate: PeopleSearchDelegate(_filterList, _personListNotifier.value),
               );
             },
           ),
         ],
       ),
-      body: _selectedIndex == 0
-          ? FutureBuilder<List<PersonModel>>(
-              future: _fetchPeople(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No persons available'));
-                } else {
-                  _personList = snapshot.data!;
-                  _filteredPersonList = _personList;
-                  return PeopleOverview(personList: _filteredPersonList);
-                }
-              },
-            )
-          : const AddPersonView(),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onItemTapped,
-        destinations: <NavigationDestination>[
-          NavigationDestination(
-            selectedIcon: const Icon(Icons.people),
-            icon: const Icon(Icons.people_alt_outlined),
-            label: 'All People (${_personList.length})',
-          ),
-          const NavigationDestination(
-            selectedIcon: Icon(Icons.person_add_rounded),
-            icon: Icon(Icons.person_add_outlined),
-            label: 'Add New',
-          ),
-        ],
+      body: ValueListenableBuilder<List<PersonModel>>(
+        valueListenable: _personListNotifier,
+        builder: (context, personList, child) {
+          if (_selectedIndex == 0) {
+            return PeopleOverview(personList: _filteredPersonList);
+          } else {
+            return const AddPersonView();
+          }
+        },
       ),
+      bottomNavigationBar: PeopleNavigationBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+        personListNotifier: _personListNotifier,
+      ),
+    );
+  }
+}
+
+class PeopleNavigationBar extends StatefulWidget {
+  final int selectedIndex;
+  final Function(int) onItemTapped;
+  final ValueNotifier<List<PersonModel>> personListNotifier;
+
+  const PeopleNavigationBar({
+    required this.selectedIndex,
+    required this.onItemTapped,
+    required this.personListNotifier,
+    super.key,
+  });
+
+  @override
+  PeopleNavigationBarState createState() => PeopleNavigationBarState();
+}
+
+class PeopleNavigationBarState extends State<PeopleNavigationBar> {
+  late String allPeopleLabel;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.personListNotifier.addListener(_updateLabel);
+    _updateLabel();
+  }
+
+  @override
+  void dispose() {
+    widget.personListNotifier.removeListener(_updateLabel);
+    super.dispose();
+  }
+
+  void _updateLabel() {
+    setState(() {
+      allPeopleLabel = 'All People (${widget.personListNotifier.value.length})';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      selectedIndex: widget.selectedIndex,
+      onDestinationSelected: widget.onItemTapped,
+      destinations: <NavigationDestination>[
+        NavigationDestination(
+          selectedIcon: const Icon(Icons.people),
+          icon: const Icon(Icons.people_alt_outlined),
+          label: allPeopleLabel,
+        ),
+        const NavigationDestination(
+          selectedIcon: Icon(Icons.person_add_rounded),
+          icon: Icon(Icons.person_add_outlined),
+          label: 'Add New',
+        ),
+      ],
     );
   }
 }
@@ -176,8 +230,6 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
           (person.profession?.toLowerCase().contains(lowerCaseQuery) ?? false);
     }).toList();
 
-    // Call the filterCallback function from PeoplePage to update state
-    WidgetsBinding.instance.addPostFrameCallback((_) => filterCallback(query));
     return PeopleOverview(personList: filteredList);
   }
 
@@ -189,8 +241,7 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
           (person.relation?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
           (person.profession?.toLowerCase().contains(lowerCaseQuery) ?? false);
     }).toList();
-    // Call the filterCallback function from PeoplePage to update state
-    WidgetsBinding.instance.addPostFrameCallback((_) => filterCallback(query));
+
     return PeopleOverview(personList: filteredList);
   }
 }

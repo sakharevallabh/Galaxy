@@ -145,8 +145,8 @@ class AddPersonViewState extends State<AddPersonView> {
   }
 
   void _showSnackBar(String message) {
+    // ScaffoldMessenger.of(context).removeCurrentSnackBar();
     if (mounted) {
-      ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
