@@ -14,7 +14,8 @@ class PeoplePage extends StatefulWidget {
 
 class PeoplePageState extends State<PeoplePage> {
   int _selectedIndex = 0;
-  final ValueNotifier<List<PersonModel>> _personListNotifier = ValueNotifier([]);
+  final ValueNotifier<List<PersonModel>> _personListNotifier =
+      ValueNotifier([]);
   List<PersonModel> _filteredPersonList = [];
   DatabaseHelper databaseHelper = DatabaseHelper();
 
@@ -23,17 +24,14 @@ class PeoplePageState extends State<PeoplePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowBanner();
+      _fetchPeople();
     });
-    _fetchPeople();
   }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    if (index == 0) {
-      _fetchPeople();
-    }
   }
 
   Future<void> _checkAndShowBanner() async {
@@ -75,12 +73,20 @@ class PeoplePageState extends State<PeoplePage> {
     super.dispose();
   }
 
-  void _fetchPeople() async {
-    List<PersonModel> fetchedUsers = await databaseHelper.getAllPersons();
-    if (mounted) {
-      _personListNotifier.value = fetchedUsers;
-      _filteredPersonList = fetchedUsers;
-    }
+  void _fetchPeople() {
+    _personListNotifier.value = [];
+    databaseHelper.getAllPersons().then((fetchedUsers) {
+      if (mounted) {
+        _personListNotifier.value = fetchedUsers;
+        _filteredPersonList = fetchedUsers;
+      }
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error fetching people: $error'),
+        ),
+      );
+    });
   }
 
   void _filterList(String query) {
@@ -90,8 +96,10 @@ class PeoplePageState extends State<PeoplePage> {
       final lowerCaseQuery = query.toLowerCase();
       _filteredPersonList = _personListNotifier.value.where((person) {
         return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
-            (person.relation?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
-            (person.profession?.toLowerCase().contains(lowerCaseQuery) ?? false);
+            (person.relation?.toLowerCase().contains(lowerCaseQuery) ??
+                false) ||
+            (person.profession?.toLowerCase().contains(lowerCaseQuery) ??
+                false);
       }).toList();
     }
     _personListNotifier.notifyListeners();
@@ -108,7 +116,8 @@ class PeoplePageState extends State<PeoplePage> {
             onPressed: () {
               showSearch(
                 context: context,
-                delegate: PeopleSearchDelegate(_filterList, _personListNotifier.value),
+                delegate: PeopleSearchDelegate(
+                    _filterList, _personListNotifier.value),
               );
             },
           ),
@@ -117,10 +126,18 @@ class PeoplePageState extends State<PeoplePage> {
       body: ValueListenableBuilder<List<PersonModel>>(
         valueListenable: _personListNotifier,
         builder: (context, personList, child) {
-          if (_selectedIndex == 0) {
-            return PeopleOverview(personList: _filteredPersonList);
+          if (personList.isEmpty) {
+            return const Center(
+              child: const CircularProgressIndicator(),
+            );
+          } else if (_filteredPersonList.isEmpty) {
+            return const Center(
+              child: Text('No persons available'),
+            );
           } else {
-            return const AddPersonView();
+            return _selectedIndex == 0
+                ? PeopleOverview(personList: _filteredPersonList)
+                : const AddPersonView();
           }
         },
       ),

@@ -268,14 +268,13 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Person Details'),
+        title: Text(_person.name ?? 'Person Details'),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () async {
               final personId = _person.id!;
               bool success;
-
               success = await showDialog(
                 context: context,
                 builder: (BuildContext context) => AlertDialog(
