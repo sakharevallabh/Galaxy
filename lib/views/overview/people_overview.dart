@@ -40,20 +40,18 @@ class PeopleOverviewState extends State<PeopleOverview> {
   }
 
   Widget _buildPersonList() {
-    if (_personList.isEmpty) {
-      return const Center(
-        child: Text('No persons available'),
-      );
-    } else {
-      if (fetchedUsers.isEmpty) {
-        fetchedUsers = _personList;
-      } else {
+    // if (_personList.isEmpty) {
+    //   return const Center(
+    //     child: Text('No persons available'),
+    //   );
+    // } else {
+      if (widget.personList.length != _personList.length) {
         fetchedUsers = widget.personList;
       }
       return ListView.builder(
         itemCount: fetchedUsers.length,
         itemBuilder: (context, index) {
-          PersonModel person = _personList[index];
+          PersonModel person = fetchedUsers[index];
           return Card(
             child: ListTile(
               leading: _buildAvatar(person),
@@ -123,7 +121,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
           );
         },
       );
-    }
+    // }
   }
 
   Widget _buildAvatar(PersonModel person) {

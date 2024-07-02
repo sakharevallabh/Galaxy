@@ -41,7 +41,8 @@ class DatabaseHelper {
     final db = await database;
 
     final existingColumns = await _getColumns(db, tablePeople);
-    final newColumns = personData.keys.where((key) => !existingColumns.contains(key)).toList();
+    final newColumns =
+        personData.keys.where((key) => !existingColumns.contains(key)).toList();
 
     // Add new columns if they don't exist
     for (final column in newColumns) {
@@ -79,7 +80,9 @@ class DatabaseHelper {
     final db = await database;
 
     final existingColumns = await _getColumns(db, tablePeople);
-    final newColumns = updatedData.keys.where((key) => !existingColumns.contains(key)).toList();
+    final newColumns = updatedData.keys
+        .where((key) => !existingColumns.contains(key))
+        .toList();
 
     // Add new columns if they don't exist
     for (final column in newColumns) {
@@ -102,9 +105,9 @@ class DatabaseHelper {
     );
   }
 
-   Future<bool> deletePerson(int id) async {
+  Future<bool> deletePerson(int id) async {
     try {
-      final db = await database;
+      Database db = await database;
       int count = await db.delete(
         tablePeople,
         where: 'id = ?',
@@ -115,7 +118,20 @@ class DatabaseHelper {
       return false;
     }
   }
-  
+
+  Future<bool> deleteField(int personId, String fieldName) async {
+    try {
+      Database db = await database;
+      int count = await db.rawDelete(
+        'UPDATE $tablePeople SET $fieldName = null WHERE id = ?',
+        [personId],
+      );
+      return count > 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<void> closeDatabase() async {
     final db = await database;
     await db.close();
