@@ -104,7 +104,9 @@ class PeoplePageState extends State<PeoplePage> {
                 false);
       }).toList();
     }
-    _personListNotifier.notifyListeners();
+     // Update the notifier's value to trigger listeners
+    _personListNotifier.value = List<PersonModel>.from(_filteredPersonList);
+
   }
 
   @override
