@@ -76,6 +76,34 @@ class DatabaseHelper {
     });
   }
 
+  Future<List<PersonModel>> getRelevantPersonDetails() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      tablePeople,
+      columns: [
+        'id', 'name', 'profession', 'relation', 'photo', 'emailAddresses', 'phoneNumbers'
+      ],
+    );
+
+    return List.generate(maps.length, (i) {
+      return PersonModel.fromJson(maps[i]);
+    });
+  }
+
+  Future<PersonModel?> getPersonById(int personId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      tablePeople,
+      where: 'id = ?',
+      whereArgs: [personId],
+    );
+
+    if (maps.isNotEmpty) {
+      return PersonModel.fromJson(maps.first);
+    }
+    return null;
+  }
+
   Future<void> updatePerson(int id, Map<String, dynamic> updatedData) async {
     final db = await database;
 

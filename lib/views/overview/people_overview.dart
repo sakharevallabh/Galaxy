@@ -25,7 +25,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
   }
 
   Future<void> _fetchPeople() async {
-    fetchedUsers = await databaseHelper.getAllPersons();
+    fetchedUsers = await databaseHelper.getRelevantPersonDetails();
     setState(() {
       _personList = fetchedUsers;
     });
@@ -103,7 +103,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => PersonDetailsPage(
-                      person: person,
+                      personId: person.id!,
                       heroTag: 'person_${person.name}',
                     ),
                   ),

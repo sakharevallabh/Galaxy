@@ -9,12 +9,12 @@ import 'package:searchfield/searchfield.dart';
 import 'package:share/share.dart';
 
 class PersonDetailsPage extends StatefulWidget {
-  final PersonModel person;
+  final int personId;
   final String heroTag;
 
   const PersonDetailsPage({
     super.key,
-    required this.person,
+    required this.personId,
     required this.heroTag,
   });
 
@@ -23,32 +23,59 @@ class PersonDetailsPage extends StatefulWidget {
 }
 
 class PersonDetailsPageState extends State<PersonDetailsPage> {
-  late PersonModel _person;
+  late PersonModel? _person;
   final DatabaseHelper _databaseHelper = DatabaseHelper();
   final Map<String, String> _selectedFields = {};
   final Map<String, TextEditingController> _controllers = {};
   final List<String> _genders = ['Male', 'Female'];
   final List<String> _maritalStatuses = ['Married', 'Unmarried', 'Divorced'];
   final List<String> _relations = [
-    'Self', 'Friend', 'Mother', 'Father', 'Sister', 'Brother', 'Son', 'Daughter', 'Husband', 'Wife', 'Grandfather', 'Grandmother', 'Acquaintance', 'Relative', 'Colleague', 'Father In-Law', 'Mother In-Law', 'Sister In-Law', 'Brother In-Law', 'Son In-Law', 'Daughter In-Law', 'Aunt', 'Nephew', 'Niece', 'Uncle'
+    'Self',
+    'Friend',
+    'Mother',
+    'Father',
+    'Sister',
+    'Brother',
+    'Son',
+    'Daughter',
+    'Husband',
+    'Wife',
+    'Grandfather',
+    'Grandmother',
+    'Acquaintance',
+    'Relative',
+    'Colleague',
+    'Father In-Law',
+    'Mother In-Law',
+    'Sister In-Law',
+    'Brother In-Law',
+    'Son In-Law',
+    'Daughter In-Law',
+    'Aunt',
+    'Nephew',
+    'Niece',
+    'Uncle'
   ];
   Uint8List? _photo;
   DateTime? _dob;
   List<String> _countries = [];
   List<String> _professions = [];
-  
+
   @override
   void initState() {
     super.initState();
-    _person = widget.person;
-    _fetchData();
-    _initializeControllers();
-    if (_person.photo != null && _person.photo!.isNotEmpty) {
-      _photo = _person.photo!;
-    }
-    if (_person.dob != null && _person.dob!.isNotEmpty) {
-      _dob = DateFormat('yyyy-MM-dd').parse(_person.dob!);
-      _controllers['Age']!.text = _calculateAge(_dob!).toString();
+    _fetchPersonDetails(widget.personId);
+  }
+
+  Future<void> _fetchPersonDetails(int personId) async {
+    final person = await _databaseHelper.getPersonById(personId);
+    if (person != null) {
+      _person = person;
+      _initializePersonDetails();
+      await _fetchData();
+      _initializeControllers();
+    } else {
+      print("Person not found");
     }
   }
 
@@ -57,29 +84,39 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     await _fetchProfessions();
   }
 
+  void _initializePersonDetails() {
+    if (_person!.photo != null && _person!.photo!.isNotEmpty) {
+      _photo = _person!.photo!;
+    }
+    if (_person!.dob != null && _person!.dob!.isNotEmpty) {
+      _dob = DateFormat('yyyy-MM-dd').parse(_person!.dob!);
+      _controllers['Age']?.text = _calculateAge(_dob!).toString();
+    }
+  }
+
   void _initializeControllers() {
-    _addController('Name', _person.name);
-    _addController('Relation', _person.relation ?? '');
-    _addController('Gender', _person.gender ?? '');
-    _addController('Date of Birth', _person.dob ?? '');
+    _addController('Name', _person!.name);
+    _addController('Relation', _person!.relation ?? '');
+    _addController('Gender', _person!.gender ?? '');
+    _addController('Date of Birth', _person!.dob ?? '');
     _addController('Age');
-    _addController('Place of Birth', _person.birthPlace ?? '');
-    _addController('Present Address', _person.presentAddress ?? '');
-    _addController('Present Country', _person.presentCountry ?? '');
-    _addController('Present Pincode', _person.presentPincode ?? '');
-    _addController('Permanent Address', _person.permanentAddress ?? '');
-    _addController('Marital Status', _person.maritalStatus ?? '');
-    _addController('Profession', _person.profession ?? '');
+    _addController('Place of Birth', _person!.birthPlace ?? '');
+    _addController('Present Address', _person!.presentAddress ?? '');
+    _addController('Present Country', _person!.presentCountry ?? '');
+    _addController('Present Pincode', _person!.presentPincode ?? '');
+    _addController('Permanent Address', _person!.permanentAddress ?? '');
+    _addController('Marital Status', _person!.maritalStatus ?? '');
+    _addController('Profession', _person!.profession ?? '');
 
     // Initialize controllers for dynamic fields based on lists
-    _initializeListControllers('Phone Number', _person.phoneNumbers);
-    _initializeListControllers('Email Address', _person.emailAddresses);
-    _initializeListControllers('Link', _person.links);
-    _initializeEducationControllers(_person.educationDetails);
+    _initializeListControllers('Phone Number', _person!.phoneNumbers);
+    _initializeListControllers('Email Address', _person!.emailAddresses);
+    _initializeListControllers('Link', _person!.links);
+    _initializeEducationControllers(_person!.educationDetails);
 
     // Initialize Interests controller
     _controllers['Interests'] =
-        TextEditingController(text: _person.interests?.join(', ') ?? '');
+        TextEditingController(text: _person!.interests?.join(', ') ?? '');
   }
 
   void _addController(String key, [String? value]) {
@@ -161,12 +198,12 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       'emailAddresses': _toJsonList(updatedEmailAddresses),
       'links': _toJsonList(updatedLinks),
       'educationDetails': _toJsonList(updatedEducationDetails),
-      'interests': _toJsonList(_person.interests),
+      'interests': _toJsonList(_person!.interests),
       'photo': _photo,
     };
 
     try {
-      await _databaseHelper.updatePerson(_person.id!, updatedData);
+      await _databaseHelper.updatePerson(_person!.id!, updatedData);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Details updated successfully!')),
@@ -268,12 +305,12 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_person.name ?? 'Person Details'),
+        title: Text(_person!.name ?? 'Person Details'),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () async {
-              final personId = _person.id!;
+              final personId = _person!.id!;
               bool success;
               success = await showDialog(
                 context: context,
@@ -364,12 +401,12 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
               _buildSearchableField('Marital Status', _maritalStatuses),
               _buildSearchableField('Profession', _professions),
               _buildNewFields(
-                  'Phone Number', _person.phoneNumbers!, TextInputType.phone),
-              _buildNewFields('Email Address', _person.emailAddresses!,
+                  'Phone Number', _person!.phoneNumbers!, TextInputType.phone),
+              _buildNewFields('Email Address', _person!.emailAddresses!,
                   TextInputType.emailAddress),
-              _buildNewFields('Link', _person.links!, TextInputType.url),
-              _buildDynamicEducationFields(_person.educationDetails),
-              _buildMultiSelectField('Interests', _person.interests!),
+              _buildNewFields('Link', _person!.links!, TextInputType.url),
+              _buildDynamicEducationFields(_person!.educationDetails),
+              _buildMultiSelectField('Interests', _person!.interests!),
             ],
           ),
         ),

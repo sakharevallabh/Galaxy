@@ -22,15 +22,16 @@ class PeoplePageState extends State<PeoplePage> {
   @override
   void initState() {
     super.initState();
+    _fetchPeople();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowBanner();
-      _fetchPeople();
     });
   }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      _fetchPeople();
     });
   }
 
@@ -74,12 +75,13 @@ class PeoplePageState extends State<PeoplePage> {
   }
 
   void _fetchPeople() {
-    _personListNotifier.value = [];
-    databaseHelper.getAllPersons().then((fetchedUsers) {
-      if (mounted) {
-        _personListNotifier.value = fetchedUsers;
-        _filteredPersonList = fetchedUsers;
-      }
+    databaseHelper.getRelevantPersonDetails().then((fetchedUsers) {
+      // if (mounted) {
+        setState(() {
+          _personListNotifier.value = fetchedUsers;
+          _filteredPersonList = fetchedUsers;
+        });
+      // }
     }).catchError((error) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -126,19 +128,9 @@ class PeoplePageState extends State<PeoplePage> {
       body: ValueListenableBuilder<List<PersonModel>>(
         valueListenable: _personListNotifier,
         builder: (context, personList, child) {
-          if (personList.isEmpty) {
-            return const Center(
-              child: const CircularProgressIndicator(),
-            );
-          } else if (_filteredPersonList.isEmpty) {
-            return const Center(
-              child: Text('No persons available'),
-            );
-          } else {
-            return _selectedIndex == 0
-                ? PeopleOverview(personList: _filteredPersonList)
-                : const AddPersonView();
-          }
+          return _selectedIndex == 0
+              ? PeopleOverview(personList: _filteredPersonList)
+              : const AddPersonView();
         },
       ),
       bottomNavigationBar: PeopleNavigationBar(
