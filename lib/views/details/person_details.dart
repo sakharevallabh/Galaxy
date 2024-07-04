@@ -69,14 +69,10 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
 
   Future<void> _fetchPersonDetails(int personId) async {
     final person = await _databaseHelper.getPersonById(personId);
-    if (person != null) {
       _person = person;
       _initializePersonDetails();
       await _fetchData();
       _initializeControllers();
-    } else {
-      print("Person not found");
-    }
   }
 
   Future<void> _fetchData() async {
