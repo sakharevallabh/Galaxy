@@ -102,6 +102,8 @@ flutter:
    # Add data Assets here 
     - assets/data/countries.json
     - assets/data/professions.json
+    - assets/data/person_interests.json
+    - assets/data/person_relations.json
     
   # To add assets to your application, add an assets section, like this:
   # assets:

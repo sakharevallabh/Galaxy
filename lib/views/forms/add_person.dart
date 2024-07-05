@@ -37,58 +37,10 @@ class AddPersonViewState extends State<AddPersonView> {
   };
   final List<String> _maritalStatuses = ['Married', 'Unmarried', 'Divorced'];
   final List<String> _gender = ['Male', 'Female'];
-  final List<String> _relations = [
-    'Self',
-    'Friend',
-    'Mother',
-    'Father',
-    'Sister',
-    'Brother',
-    'Son',
-    'Daughter',
-    'Husband',
-    'Wife',
-    'Grandfather',
-    'Grandmother',
-    'Acquaintance',
-    'Relative',
-    'Colleague',
-    'Father In-Law',
-    'Mother In-Law',
-    'Sister In-Law',
-    'Brother In-Law'
-    'Son In-Law',
-    'Daughter In-Law',
-    'Aunt',
-    'Nephew',
-    'Niece',
-    'Uncle'
-  ];
   List<String> _countries = [];
   List<String> _professions = [];
-  final List<String> _interests = [
-    'Reading',
-    'Writing',
-    'Sports',
-    'Music',
-    'Movies',
-    'Travel',
-    'Cooking',
-    'Finance',
-    'Learning',
-    'Blogging',
-    'Content Creation',
-    'Gardening',
-    'Painting',
-    'Nature',
-    'Fitness',
-    'Gaming',
-    'Photography',
-    'Dancing',
-    'Adventure Sports',
-    'Fishing',
-    'Other'
-  ];
+  List<String> _interests = [];
+  List<String> _relations = [];
   final List<String> _degrees = [
     'Graduate',
     'Bachelor',
@@ -107,6 +59,8 @@ class AddPersonViewState extends State<AddPersonView> {
     super.initState();
     _fetchCountries();
     _fetchProfessions();
+    _fetchInterests();
+    _fetchRelations();
   }
 
   @override
@@ -115,6 +69,10 @@ class AddPersonViewState extends State<AddPersonView> {
     _controllers.forEach((key, controller) {
       controller.dispose();
     });
+    _countries = [];
+    _professions = [];
+    _interests = [];
+    _relations = [];
     super.dispose();
   }
 
@@ -159,7 +117,7 @@ class AddPersonViewState extends State<AddPersonView> {
 
       if (_image != null) {
         _controllers['Photo']?.text =
-            _image!.path; // Assuming you have a Photo controller
+            _image!.path;
       }
 
       await databaseHelper.insertPerson({
@@ -211,6 +169,32 @@ class AddPersonViewState extends State<AddPersonView> {
       setState(() {
         final List<dynamic> data = jsonDecode(responseProfessions);
         _professions = data.map((profession) => profession.toString()).toList();
+      });
+    }
+  }
+
+  Future<void> _fetchInterests() async {
+    if (mounted) {
+      final String responseInterests =
+          await rootBundle.loadString('assets/data/person_interests.json');
+      await Future.delayed(const Duration(seconds: 1));
+
+      setState(() {
+        final List<dynamic> data = jsonDecode(responseInterests);
+        _interests = data.map((interests) => interests.toString()).toList();
+      });
+    }
+  }
+
+  Future<void> _fetchRelations() async {
+    if (mounted) {
+      final String responseRelations =
+          await rootBundle.loadString('assets/data/person_relations.json');
+      await Future.delayed(const Duration(seconds: 1));
+
+      setState(() {
+        final List<dynamic> data = jsonDecode(responseRelations);
+        _relations = data.map((relations) => relations.toString()).toList();
       });
     }
   }

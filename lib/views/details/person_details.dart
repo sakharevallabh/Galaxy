@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:galaxy/helpers/people_database_helper.dart';
@@ -23,96 +24,75 @@ class PersonDetailsPage extends StatefulWidget {
 }
 
 class PersonDetailsPageState extends State<PersonDetailsPage> {
-  late PersonModel? _person;
+  late Future<PersonModel?> _personDetailsFuture;
   final DatabaseHelper _databaseHelper = DatabaseHelper();
   final Map<String, String> _selectedFields = {};
   final Map<String, TextEditingController> _controllers = {};
   final List<String> _genders = ['Male', 'Female'];
   final List<String> _maritalStatuses = ['Married', 'Unmarried', 'Divorced'];
-  final List<String> _relations = [
-    'Self',
-    'Friend',
-    'Mother',
-    'Father',
-    'Sister',
-    'Brother',
-    'Son',
-    'Daughter',
-    'Husband',
-    'Wife',
-    'Grandfather',
-    'Grandmother',
-    'Acquaintance',
-    'Relative',
-    'Colleague',
-    'Father In-Law',
-    'Mother In-Law',
-    'Sister In-Law',
-    'Brother In-Law',
-    'Son In-Law',
-    'Daughter In-Law',
-    'Aunt',
-    'Nephew',
-    'Niece',
-    'Uncle'
-  ];
+  bool _isInitialized = false;
   Uint8List? _photo;
   DateTime? _dob;
   List<String> _countries = [];
   List<String> _professions = [];
+  List<String> _interests = [];
+  List<String> _relations = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchPersonDetails(widget.personId);
+    _personDetailsFuture = _fetchPersonDetails(widget.personId);
+    _fetchData();
   }
 
-  Future<void> _fetchPersonDetails(int personId) async {
-    final person = await _databaseHelper.getPersonById(personId);
-      _person = person;
-      _initializePersonDetails();
-      await _fetchData();
-      _initializeControllers();
+  Future<PersonModel?> _fetchPersonDetails(int personId) async {
+    return await _databaseHelper.getPersonById(personId);
   }
 
   Future<void> _fetchData() async {
     await _fetchCountries();
     await _fetchProfessions();
+    await _fetchInterests();
+    await _fetchRelations();
   }
 
-  void _initializePersonDetails() {
-    if (_person!.photo != null && _person!.photo!.isNotEmpty) {
-      _photo = _person!.photo!;
-    }
-    if (_person!.dob != null && _person!.dob!.isNotEmpty) {
-      _dob = DateFormat('yyyy-MM-dd').parse(_person!.dob!);
-      _controllers['Age']?.text = _calculateAge(_dob!).toString();
+  void _initializePersonDetails(PersonModel person) {
+    _initializeControllers(person);
+    if (_isInitialized == false) {
+      if (person.photo != null && person.photo!.isNotEmpty) {
+        _photo = person.photo!;
+      }
+      if (person.dob != null && person.dob!.isNotEmpty) {
+        _dob = DateFormat('yyyy-MM-dd').parse(person.dob!);
+        _controllers['Age']?.text = _calculateAge(_dob!).toString();
+      }
+      _isInitialized = true;
     }
   }
 
-  void _initializeControllers() {
-    _addController('Name', _person!.name);
-    _addController('Relation', _person!.relation ?? '');
-    _addController('Gender', _person!.gender ?? '');
-    _addController('Date of Birth', _person!.dob ?? '');
+  void _initializeControllers(PersonModel person) {
+    _addController('Name', person.name);
+    _addController('Relation', person.relation ?? '');
+    _addController('Gender', person.gender ?? '');
+    _addController('Date of Birth', person.dob ?? '');
     _addController('Age');
-    _addController('Place of Birth', _person!.birthPlace ?? '');
-    _addController('Present Address', _person!.presentAddress ?? '');
-    _addController('Present Country', _person!.presentCountry ?? '');
-    _addController('Present Pincode', _person!.presentPincode ?? '');
-    _addController('Permanent Address', _person!.permanentAddress ?? '');
-    _addController('Marital Status', _person!.maritalStatus ?? '');
-    _addController('Profession', _person!.profession ?? '');
+    _addController('Place of Birth', person.birthPlace ?? '');
+    _addController('Present Address', person.presentAddress ?? '');
+    _addController('Present Country', person.presentCountry ?? '');
+    _addController('Present Pincode', person.presentPincode ?? '');
+    _addController('Permanent Address', person.permanentAddress ?? '');
+    _addController('Marital Status', person.maritalStatus ?? '');
+    _addController('Profession', person.profession ?? '');
 
     // Initialize controllers for dynamic fields based on lists
-    _initializeListControllers('Phone Number', _person!.phoneNumbers);
-    _initializeListControllers('Email Address', _person!.emailAddresses);
-    _initializeListControllers('Link', _person!.links);
-    _initializeEducationControllers(_person!.educationDetails);
+    _initializeListControllers('Phone Number', person.phoneNumbers);
+    _initializeListControllers('Email Address', person.emailAddresses);
+    _initializeListControllers('Link', person.links);
+    _initializeEducationControllers(person.educationDetails);
 
     // Initialize Interests controller
     _controllers['Interests'] =
-        TextEditingController(text: _person!.interests?.join(', ') ?? '');
+        TextEditingController(text: person.interests?.join(', ') ?? '');
   }
 
   void _addController(String key, [String? value]) {
@@ -194,12 +174,12 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       'emailAddresses': _toJsonList(updatedEmailAddresses),
       'links': _toJsonList(updatedLinks),
       'educationDetails': _toJsonList(updatedEducationDetails),
-      'interests': _toJsonList(_person!.interests),
+      // 'interests': _toJsonList(_person!.interests),
       'photo': _photo,
     };
 
     try {
-      await _databaseHelper.updatePerson(_person!.id!, updatedData);
+      await _databaseHelper.updatePerson(widget.personId, updatedData);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Details updated successfully!')),
@@ -240,7 +220,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     return age;
   }
 
-  Future<void> _selectDate(BuildContext context) async {
+  void _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _dob ?? DateTime.now(),
@@ -252,20 +232,21 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         _dob = picked;
         _controllers['Date of Birth']!.text =
             DateFormat('yyyy-MM-dd').format(picked);
-        _controllers['Age']!.text = _calculateAge(picked).toString();
+        // WidgetsBinding.instance.addPostFrameCallback((_) {
+          _controllers['Age']!.text = _calculateAge(picked).toString();
+        // });
       });
     }
   }
 
-  Future<void> _pickImage() async {
+  void _pickImage() async {
     final picker = ImagePicker();
     try {
       final pickedFile = await picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
-        pickedFile.readAsBytes().then((value) {
-          setState(() {
-            _photo = value;
-          });
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _photo = bytes;
         });
       }
     } catch (error) {
@@ -299,114 +280,137 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_person!.name ?? 'Person Details'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () async {
-              final personId = _person!.id!;
-              bool success;
-              success = await showDialog(
-                context: context,
-                builder: (BuildContext context) => AlertDialog(
-                  title: const Text('Confirm Delete'),
-                  content: const Text(
-                      'Are you sure you want to delete this person?'),
-                  actions: <Widget>[
-                    TextButton(
-                      child: const Text('Cancel'),
-                      onPressed: () {
-                        Navigator.of(context).pop(false);
-                      },
+    return FutureBuilder<PersonModel?>(
+      future: _personDetailsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(child: Text('Error: ${snapshot.error}')),
+          );
+        } else if (!snapshot.hasData || snapshot.data == null) {
+          return const Scaffold(
+            body: Center(child: Text('No data found')),
+          );
+        } else {
+          PersonModel person = snapshot.data!;
+          _initializePersonDetails(person); // Initialize data once fetched
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(person.name ?? 'Person Details'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () async {
+                    final personId = person.id;
+                    bool success;
+                    success = await showDialog(
+                      context: context,
+                      builder: (BuildContext context) => AlertDialog(
+                        title: const Text('Confirm Delete'),
+                        content: const Text('Are you sure you want to delete?'),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text('Cancel'),
+                            onPressed: () {
+                              Navigator.of(context).pop(false);
+                            },
+                          ),
+                          TextButton(
+                            child: const Text('Delete'),
+                            onPressed: () async {
+                              bool result = await _deletePerson(personId!);
+                              Navigator.of(context).pop(result);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (success) {
+                      if (mounted) {
+                        Navigator.of(context).pop();
+                      }
+                    } else {
+                      // Handle deletion failure
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Failed to delete person.'),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
+            floatingActionButton: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton(
+                  heroTag: 'save',
+                  onPressed: _updatePerson,
+                  child: const Icon(Icons.save),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton(
+                  heroTag: 'share',
+                  onPressed: _shareSelectedFields,
+                  child: const Icon(Icons.share),
+                ),
+              ],
+            ),
+            body: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Hero(
+                      tag: widget.heroTag,
+                      child: Material(
+                        child: GestureDetector(
+                          onTap: _pickImage,
+                          child: CircleAvatar(
+                            radius: 90,
+                            backgroundColor: Colors.grey[300],
+                            backgroundImage:
+                                _photo != null ? MemoryImage(_photo!) : null,
+                            child: _photo == null
+                                ? const Icon(Icons.person, size: 90)
+                                : null,
+                          ),
+                        ),
+                      ),
                     ),
-                    TextButton(
-                      child: const Text('Delete'),
-                      onPressed: () async {
-                        bool result = await _deletePerson(personId);
-                        Navigator.of(context).pop(result);
-                      },
-                    ),
+                    _buildEditableField('Name'),
+                    _buildSearchableField('Relation', _relations),
+                    _buildSearchableField('Gender', _genders),
+                    _buildDatePickerField('Date of Birth'),
+                    _buildEditableField('Age'),
+                    _buildEditableField('Place of Birth'),
+                    _buildEditableField('Present Address'),
+                    _buildSearchableField('Present Country', _countries),
+                    _buildEditableField(
+                        'Present Pincode', TextInputType.number),
+                    _buildEditableField('Permanent Address'),
+                    _buildSearchableField('Marital Status', _maritalStatuses),
+                    _buildSearchableField('Profession', _professions),
+                    _buildNewFields('Phone Number', person.phoneNumbers!,
+                        TextInputType.phone),
+                    _buildNewFields('Email Address', person.emailAddresses!,
+                        TextInputType.emailAddress),
+                    _buildNewFields('Link', person.links!, TextInputType.url),
+                    _buildDynamicEducationFields(person.educationDetails),
+                    _buildMultiSelectField('Interests', person.interests!),
                   ],
                 ),
-              );
-
-              if (success) {
-                if (mounted) {
-                  Navigator.of(context).pop();
-                }
-              } else {
-                // Handle deletion failure
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Failed to delete person.'),
-                  ),
-                );
-              }
-            },
-          ),
-        ],
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton(
-            heroTag: 'save',
-            onPressed: _updatePerson,
-            child: const Icon(Icons.save),
-          ),
-          const SizedBox(height: 8),
-          FloatingActionButton(
-            heroTag: 'share',
-            onPressed: _shareSelectedFields,
-            child: const Icon(Icons.share),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Hero(
-                tag: widget.heroTag,
-                child: GestureDetector(
-                  onTap: _pickImage,
-                  child: CircleAvatar(
-                    radius: 90,
-                    backgroundColor: Colors.grey[300],
-                    backgroundImage:
-                        _photo != null ? MemoryImage(_photo!) : null,
-                    child: _photo == null
-                        ? const Icon(Icons.person, size: 90)
-                        : null,
-                  ),
-                ),
               ),
-              _buildEditableField('Name'),
-              _buildSearchableField('Relation', _relations),
-              _buildSearchableField('Gender', _genders),
-              _buildDatePickerField('Date of Birth'),
-              _buildEditableField('Age'),
-              _buildEditableField('Place of Birth'),
-              _buildEditableField('Present Address'),
-              _buildSearchableField('Present Country', _countries),
-              _buildEditableField('Present Pincode', TextInputType.number),
-              _buildEditableField('Permanent Address'),
-              _buildSearchableField('Marital Status', _maritalStatuses),
-              _buildSearchableField('Profession', _professions),
-              _buildNewFields(
-                  'Phone Number', _person!.phoneNumbers!, TextInputType.phone),
-              _buildNewFields('Email Address', _person!.emailAddresses!,
-                  TextInputType.emailAddress),
-              _buildNewFields('Link', _person!.links!, TextInputType.url),
-              _buildDynamicEducationFields(_person!.educationDetails),
-              _buildMultiSelectField('Interests', _person!.interests!),
-            ],
-          ),
-        ),
-      ),
+            ),
+          );
+        }
+      },
     );
   }
 
@@ -673,6 +677,24 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     final List<dynamic> data = jsonDecode(responseProfessions);
     setState(() {
       _professions = data.map((professions) => professions.toString()).toList();
+    });
+  }
+
+  Future<void> _fetchInterests() async {
+    final String responseInterests =
+        await rootBundle.loadString('assets/data/person_interests.json');
+    final List<dynamic> data = jsonDecode(responseInterests);
+    setState(() {
+      _interests = data.map((interests) => interests.toString()).toList();
+    });
+  }
+
+  Future<void> _fetchRelations() async {
+    final String responseRelations =
+        await rootBundle.loadString('assets/data/person_relations.json');
+    final List<dynamic> data = jsonDecode(responseRelations);
+    setState(() {
+      _relations = data.map((relations) => relations.toString()).toList();
     });
   }
 }
