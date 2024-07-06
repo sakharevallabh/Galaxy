@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:galaxy/helpers/people_database_helper.dart';
+import 'package:galaxy/provider/people_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
+import 'package:provider/provider.dart';
 import 'package:searchfield/searchfield.dart';
 
 class AddPersonView extends StatefulWidget {
@@ -20,7 +22,6 @@ class AddPersonViewState extends State<AddPersonView> {
   final logger = Logger();
   final DatabaseHelper databaseHelper =
       DatabaseHelper(); // Update with your actual database helper class
-  XFile? _image;
   Uint8List? _photo;
   final Map<String, TextEditingController> _controllers = {
     'Name': TextEditingController(),
@@ -51,7 +52,7 @@ class AddPersonViewState extends State<AddPersonView> {
   final List<String> _selectedInterests = [];
   final List<String> _phoneNumbers = [];
   final List<String> _emailAddresses = [];
-    final List<String> _links = [];
+  final List<String> _links = [];
   final List<Map<String, String>> _educationDetails = [];
 
   @override
@@ -82,7 +83,6 @@ class AddPersonViewState extends State<AddPersonView> {
       controller.clear();
     });
     setState(() {
-      _image = null;
       _photo = null;
     });
   }
@@ -93,7 +93,6 @@ class AddPersonViewState extends State<AddPersonView> {
     if (pickedFile != null) {
       pickedFile.readAsBytes().then((value) {
         setState(() {
-          _image = pickedFile;
           _photo = value;
         });
       }).catchError((error) {
@@ -115,12 +114,7 @@ class AddPersonViewState extends State<AddPersonView> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      if (_image != null) {
-        _controllers['Photo']?.text =
-            _image!.path;
-      }
-
-      await databaseHelper.insertPerson({
+      Map<String, dynamic> newPerson = {
         'name': _controllers['Name']?.text,
         'gender': _controllers['Gender']?.text,
         'dob': _controllers['Date of Birth']?.text,
@@ -137,9 +131,18 @@ class AddPersonViewState extends State<AddPersonView> {
         'phoneNumbers': jsonEncode(_phoneNumbers),
         'emailAddresses': jsonEncode(_emailAddresses),
         'educationDetails': jsonEncode(_educationDetails),
-      });
+      };
 
-      _showSnackBar('Person added successfully!');
+      bool isSuccess = await Provider.of<PeopleProvider>(context, listen: false).addPerson(newPerson);
+      if (mounted) {
+        Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
+      }
+
+      if (isSuccess = true) {
+        _showSnackBar('Person added successfully!');
+      } else {
+        _showSnackBar('Could not add person. Something went wrong!!');
+      }
 
       if (widget.onPersonAdded != null) {
         widget.onPersonAdded!();
@@ -284,7 +287,7 @@ class AddPersonViewState extends State<AddPersonView> {
     });
   }
 
-   void _addLink(List<String> links) {
+  void _addLink(List<String> links) {
     setState(() {
       links.add('');
     });
@@ -310,7 +313,8 @@ class AddPersonViewState extends State<AddPersonView> {
     );
   }
 
-  Widget _buildTextFields(String fieldName, [TextInputType keyboardType = TextInputType.text]) {
+  Widget _buildTextFields(String fieldName,
+      [TextInputType keyboardType = TextInputType.text]) {
     return Column(
       children: [
         TextFormField(
@@ -427,7 +431,6 @@ class AddPersonViewState extends State<AddPersonView> {
         child: Form(
           key: _formKey,
           child: ListView(
-
             children: [
               GestureDetector(
                 onTap: _pickImage,

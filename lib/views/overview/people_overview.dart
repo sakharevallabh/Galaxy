@@ -1,35 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/helpers/people_database_helper.dart';
 import 'package:galaxy/model/person_model.dart';
+import 'package:galaxy/provider/people_provider.dart';
 import 'package:galaxy/views/details/person_details.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class PeopleOverview extends StatefulWidget {
+class PeopleOverview extends StatelessWidget {
   final List<PersonModel> personList;
 
   const PeopleOverview({super.key, required this.personList});
-
-  @override
-  PeopleOverviewState createState() => PeopleOverviewState();
-}
-
-class PeopleOverviewState extends State<PeopleOverview> {
-  List<PersonModel> _personList = [];
-  List<PersonModel> fetchedUsers = [];
-  DatabaseHelper databaseHelper = DatabaseHelper();
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchPeople();
-  }
-
-  Future<void> _fetchPeople() async {
-    fetchedUsers = await databaseHelper.getRelevantPersonDetails();
-    setState(() {
-      _personList = fetchedUsers;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,13 +18,10 @@ class PeopleOverviewState extends State<PeopleOverview> {
   }
 
   Widget _buildPersonList() {
-      if (widget.personList.length != _personList.length) {
-        fetchedUsers = widget.personList;
-      }
       return ListView.builder(
-        itemCount: fetchedUsers.length,
+        itemCount: personList.length,
         itemBuilder: (context, index) {
-          PersonModel person = fetchedUsers[index];
+          PersonModel person = personList[index];
           return Card(
             child: ListTile(
               leading: _buildAvatar(person),
@@ -109,7 +85,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
                   ),
                 ).then((value) {
                   // Refresh the list when returning from details page
-                  _fetchPeople();
+                  Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
                 });
               },
             ),

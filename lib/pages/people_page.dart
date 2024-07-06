@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:galaxy/helpers/people_database_helper.dart';
 import 'package:galaxy/model/person_model.dart';
+import 'package:galaxy/provider/people_provider.dart';
 import 'package:galaxy/views/overview/people_overview.dart';
 import 'package:galaxy/views/forms/add_person.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PeoplePage extends StatefulWidget {
@@ -14,15 +16,12 @@ class PeoplePage extends StatefulWidget {
 
 class PeoplePageState extends State<PeoplePage> {
   int _selectedIndex = 0;
-  final ValueNotifier<List<PersonModel>> _personListNotifier =
-      ValueNotifier([]);
-  List<PersonModel> _filteredPersonList = [];
   DatabaseHelper databaseHelper = DatabaseHelper();
 
   @override
   void initState() {
     super.initState();
-    _fetchPeople();
+    Provider.of<PeopleProvider>(context, listen: false).loadPeople();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowBanner();
     });
@@ -31,7 +30,6 @@ class PeoplePageState extends State<PeoplePage> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      _fetchPeople();
     });
   }
 
@@ -70,47 +68,14 @@ class PeoplePageState extends State<PeoplePage> {
 
   @override
   void dispose() {
-    _personListNotifier.dispose();
     super.dispose();
-  }
-
-  void _fetchPeople() {
-    databaseHelper.getRelevantPersonDetails().then((fetchedUsers) {
-      // if (mounted) {
-        setState(() {
-          _personListNotifier.value = fetchedUsers;
-          _filteredPersonList = fetchedUsers;
-        });
-      // }
-    }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error fetching people: $error'),
-        ),
-      );
-    });
-  }
-
-  void _filterList(String query) {
-    if (query.isEmpty) {
-      _filteredPersonList = _personListNotifier.value;
-    } else {
-      final lowerCaseQuery = query.toLowerCase();
-      _filteredPersonList = _personListNotifier.value.where((person) {
-        return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
-            (person.relation?.toLowerCase().contains(lowerCaseQuery) ??
-                false) ||
-            (person.profession?.toLowerCase().contains(lowerCaseQuery) ??
-                false);
-      }).toList();
-    }
-     // Update the notifier's value to trigger listeners
-    _personListNotifier.value = List<PersonModel>.from(_filteredPersonList);
-
   }
 
   @override
   Widget build(BuildContext context) {
+    final peopleProvider = Provider.of<PeopleProvider>(context);
+    final personList = peopleProvider.personList;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('People'),
@@ -121,77 +86,45 @@ class PeoplePageState extends State<PeoplePage> {
               showSearch(
                 context: context,
                 delegate: PeopleSearchDelegate(
-                    _filterList, _personListNotifier.value),
+                    peopleProvider.filterList, personList),
               );
             },
           ),
         ],
       ),
-      body: ValueListenableBuilder<List<PersonModel>>(
-        valueListenable: _personListNotifier,
-        builder: (context, personList, child) {
-          return _selectedIndex == 0
-              ? PeopleOverview(personList: _filteredPersonList)
-              : const AddPersonView();
-        },
-      ),
+      body: _selectedIndex == 0
+          ? PeopleOverview(personList: personList)
+          : const AddPersonView(),
       bottomNavigationBar: PeopleNavigationBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
-        personListNotifier: _personListNotifier,
       ),
     );
   }
 }
 
-class PeopleNavigationBar extends StatefulWidget {
+class PeopleNavigationBar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
-  final ValueNotifier<List<PersonModel>> personListNotifier;
 
   const PeopleNavigationBar({
     required this.selectedIndex,
     required this.onItemTapped,
-    required this.personListNotifier,
     super.key,
   });
 
   @override
-  PeopleNavigationBarState createState() => PeopleNavigationBarState();
-}
-
-class PeopleNavigationBarState extends State<PeopleNavigationBar> {
-  late String allPeopleLabel;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.personListNotifier.addListener(_updateLabel);
-    _updateLabel();
-  }
-
-  @override
-  void dispose() {
-    widget.personListNotifier.removeListener(_updateLabel);
-    super.dispose();
-  }
-
-  void _updateLabel() {
-    setState(() {
-      allPeopleLabel = 'All People (${widget.personListNotifier.value.length})';
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final peopleProvider = Provider.of<PeopleProvider>(context);
+
     return NavigationBar(
-      selectedIndex: widget.selectedIndex,
-      onDestinationSelected: widget.onItemTapped,
+      selectedIndex: selectedIndex,
+      onDestinationSelected: onItemTapped,
       destinations: <NavigationDestination>[
         NavigationDestination(
           selectedIcon: const Icon(Icons.people),
           icon: const Icon(Icons.people_alt_outlined),
-          label: allPeopleLabel,
+          label: 'All People (${peopleProvider.personList.length})',
         ),
         const NavigationDestination(
           selectedIcon: Icon(Icons.person_add_rounded),
@@ -234,6 +167,7 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildResults(BuildContext context) {
+    filterCallback(query);
     final filteredList = personList.where((person) {
       final lowerCaseQuery = query.toLowerCase();
       return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
@@ -246,6 +180,7 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
+    filterCallback(query);
     final filteredList = personList.where((person) {
       final lowerCaseQuery = query.toLowerCase();
       return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:galaxy/pages/home_page.dart';
 import 'package:galaxy/pages/lock_screen.dart';
 import 'package:galaxy/provider/navigation_provider.dart';
+import 'package:galaxy/provider/people_provider.dart';
 import 'package:provider/provider.dart';
 
 Future main() async {
@@ -21,13 +22,17 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) => ChangeNotifierProvider(
-        create: (context) => NavigationProvider(),
+  Widget build(BuildContext context) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => NavigationProvider()),
+          ChangeNotifierProvider(create: (_) => PeopleProvider()),
+        ],
         child: MaterialApp(
           title: title,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
             useMaterial3: true,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
           ),
           // home: const LockScreenPage(),
           home: const MyHomePage(title: 'Galaxy View'),
