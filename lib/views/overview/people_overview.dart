@@ -27,6 +27,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
+              _selectModeOn = false;
               showSearch(
                 context: context,
                 delegate: PeopleSearchDelegate(
@@ -65,7 +66,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
         ),
       );
     }
-    _refrshPeople();
+    _refreshPeople();
   }
 
   void _selectPerson(int personId, String personName) {
@@ -91,7 +92,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
       ),
     ).then((value) {
       if (context.mounted) {
-        _refrshPeople();
+        _refreshPeople();
       }
     });
     _selectModeOn = false;
@@ -103,13 +104,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
         Overlay.of(context).context.findRenderObject() as RenderBox;
     showMenu(
       context: context,
-      position: RelativeRect.fromRect(
-        Rect.fromPoints(
-          tapPosition,
-          tapPosition,
-        ),
-        Offset.zero & overlay.size,
-      ),
+      position: _calculateMenuPosition(tapPosition, overlay.size),
       items: [
         PopupMenuItem(
           value: 'open',
@@ -128,6 +123,13 @@ class PeopleOverviewState extends State<PeopleOverview> {
         ),
       ],
       elevation: 8.0,
+    );
+  }
+
+  RelativeRect _calculateMenuPosition(Offset tapPosition, Size overlaySize) {
+    return RelativeRect.fromRect(
+      Rect.fromPoints(tapPosition, tapPosition),
+      Offset.zero & overlaySize,
     );
   }
 
@@ -152,7 +154,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
   }
 
   void _deleteSelectedPersons() {
-    for (int id in _selectedIds) {
+    for (int id in _selectedIds.toList()) {
       _deletePerson(context, id, 'Selected Person');
     }
     setState(() {
@@ -162,7 +164,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
 
   void _deleteAllPersons() {
     final peopleProvider = Provider.of<PeopleProvider>(context, listen: false);
-    for (PersonModel person in peopleProvider.personList) {
+    for (PersonModel person in peopleProvider.personList.toList()) {
       _deletePerson(context, person.id!, person.name!);
     }
     setState(() {
@@ -170,7 +172,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
     });
   }
 
-  void _refrshPeople() {
+  void _refreshPeople() {
     Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
   }
 
@@ -285,7 +287,7 @@ class PersonListItem extends StatelessWidget {
 class PeopleSearchDelegate extends SearchDelegate<String> {
   final List<PersonModel> personList;
   final Set<int> selectedIds;
-  final bool selectModeOn;
+  bool selectModeOn;
   final Function(int, String) selectPerson;
   final Function(BuildContext, int, String) openPersonDetails;
   final Function(BuildContext, int, String, Offset) showListMenu;
@@ -306,6 +308,7 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
         icon: const Icon(Icons.clear),
         onPressed: () {
           query = '';
+          selectModeOn = false;
           showSuggestions(context);
         },
       ),
@@ -318,6 +321,7 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
       icon: const Icon(Icons.arrow_back),
       onPressed: () {
         close(context, '');
+        selectModeOn = false;
         Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
       },
     );
@@ -325,15 +329,23 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildResults(BuildContext context) {
-    final filteredList = personList.where(
-        (person) => person.name!.toLowerCase().contains(query.toLowerCase()));
+    final filteredList = personList.where((person) {
+      final lowerCaseQuery = query.toLowerCase();
+      return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
+          (person.relation?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
+          (person.profession?.toLowerCase().contains(lowerCaseQuery) ?? false);
+    });
     return _buildFilteredList(context, filteredList.toList());
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final filteredList = personList.where(
-        (person) => person.name!.toLowerCase().contains(query.toLowerCase()));
+    final filteredList = personList.where((person) {
+      final lowerCaseQuery = query.toLowerCase();
+      return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
+          (person.relation?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
+          (person.profession?.toLowerCase().contains(lowerCaseQuery) ?? false);
+    });
     return _buildFilteredList(context, filteredList.toList());
   }
 
