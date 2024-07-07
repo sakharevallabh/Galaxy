@@ -9,7 +9,9 @@ import 'package:galaxy/pages/expenses_page.dart';
 import 'package:galaxy/pages/my_universe_page.dart';
 import 'package:galaxy/pages/people_page.dart';
 import 'package:galaxy/pages/vehicles_page.dart';
+import 'package:galaxy/provider/people_provider.dart';
 import 'package:galaxy/widget/navigation_drawer_widget.dart';
+import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:flip_card/flip_card.dart';
 
@@ -86,6 +88,11 @@ class _MyHomePageState extends State<MyHomePage> {
     for (var timer in timers) {
       timer?.cancel();
     }
+  }
+
+  int _peopleCount () {
+    final peopleProvider = Provider.of<PeopleProvider>(context);
+    return peopleProvider.personList.length;
   }
 
   String getRandomString(List<String> strings) {
@@ -336,7 +343,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       Icons.people,
                       const PeoplePage(),
                       Colors.amberAccent,
-                      'Total People: 50',
+                      'Total People: ${_peopleCount()}',
                       0),
                   _buildGridCard(
                       context,
