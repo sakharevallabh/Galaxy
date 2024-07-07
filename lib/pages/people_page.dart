@@ -17,12 +17,14 @@ class PeoplePage extends StatefulWidget {
 class PeoplePageState extends State<PeoplePage> {
   int _selectedIndex = 0;
   DatabaseHelper databaseHelper = DatabaseHelper();
+  late PeopleProvider peopleProvider;
 
   @override
   void initState() {
     super.initState();
-    Provider.of<PeopleProvider>(context, listen: false).loadPeople();
+    _selectedIndex = 0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
       _checkAndShowBanner();
     });
   }
@@ -36,28 +38,29 @@ class PeoplePageState extends State<PeoplePage> {
   Future<void> _checkAndShowBanner() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool bannerShown = prefs.getBool('bannerShown') ?? false;
-    if (!bannerShown) {
+    if (!bannerShown && mounted) {
       _showMaterialBanner();
       await prefs.setBool('bannerShown', true);
     }
   }
 
   void _showMaterialBanner() {
-    _clearMaterialBanner();
-    ScaffoldMessenger.of(context).showMaterialBanner(MaterialBanner(
-      padding: const EdgeInsets.all(16),
-      leading: const Icon(Icons.info, color: Colors.black, size: 32),
-      backgroundColor: Colors.white,
-      content: const Text(
-          'All details are stored on your phone or cloud of your choice and not on our servers.'),
-      actions: <Widget>[
-        TextButton(
-          child: const Text('OK'),
-          onPressed: () =>
-              ScaffoldMessenger.of(context).hideCurrentMaterialBanner(),
-        )
-      ],
-    ));
+    if (mounted) {
+      _clearMaterialBanner();
+      ScaffoldMessenger.of(context).showMaterialBanner(MaterialBanner(
+        padding: const EdgeInsets.all(16),
+        leading: const Icon(Icons.info, color: Colors.black, size: 32),
+        backgroundColor: Colors.white,
+        content: const Text(
+            'All details are stored on your phone or cloud of your choice and not on our servers.'),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () => _clearMaterialBanner(),
+          )
+        ],
+      ));
+    }
   }
 
   void _clearMaterialBanner() {
@@ -73,9 +76,9 @@ class PeoplePageState extends State<PeoplePage> {
 
   @override
   Widget build(BuildContext context) {
-    final peopleProvider = Provider.of<PeopleProvider>(context);
+    peopleProvider = Provider.of<PeopleProvider>(context);
     final personList = peopleProvider.personList;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('People'),
@@ -85,8 +88,8 @@ class PeoplePageState extends State<PeoplePage> {
             onPressed: () {
               showSearch(
                 context: context,
-                delegate: PeopleSearchDelegate(
-                    peopleProvider.filterList, personList),
+                delegate:
+                    PeopleSearchDelegate(peopleProvider.filterList, personList),
               );
             },
           ),
@@ -149,7 +152,8 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
         icon: const Icon(Icons.clear),
         onPressed: () {
           query = '';
-          filterCallback(query);
+          Future.microtask(() => filterCallback(query));
+          Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
         },
       ),
     ];
@@ -161,13 +165,14 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
       icon: const Icon(Icons.arrow_back),
       onPressed: () {
         close(context, '');
+        Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
       },
     );
   }
 
   @override
   Widget buildResults(BuildContext context) {
-    filterCallback(query);
+    Future.microtask(() => filterCallback(query));
     final filteredList = personList.where((person) {
       final lowerCaseQuery = query.toLowerCase();
       return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
@@ -180,7 +185,7 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    filterCallback(query);
+    Future.microtask(() => filterCallback(query));
     final filteredList = personList.where((person) {
       final lowerCaseQuery = query.toLowerCase();
       return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||

@@ -66,25 +66,42 @@ class AddPersonViewState extends State<AddPersonView> {
 
   @override
   void dispose() {
-    _clearForm();
+    // Clear form fields and dispose controllers
+    _clearForm(dispose: true);
+
+    // Dispose controllers
     _controllers.forEach((key, controller) {
       controller.dispose();
     });
+
+    // Clear lists
     _countries = [];
     _professions = [];
     _interests = [];
     _relations = [];
+
     super.dispose();
   }
 
-  void _clearForm() {
-    _formKey.currentState!.reset();
+  void _clearForm({bool dispose = false}) {
+    if (!dispose) {
+      _formKey.currentState!.reset();
+    }
+
     _controllers.forEach((key, controller) {
       controller.clear();
     });
-    setState(() {
+
+    if (!dispose) {
+      setState(() {
+        if (_photo != null && _photo!.isNotEmpty) {
+          _photo = null;
+        }
+      });
+    } else {
+      // Directly set _photo to null without setState in dispose case
       _photo = null;
-    });
+    }
   }
 
   Future<void> _pickImage() async {
@@ -133,17 +150,16 @@ class AddPersonViewState extends State<AddPersonView> {
         'educationDetails': jsonEncode(_educationDetails),
       };
 
-      bool isSuccess = await Provider.of<PeopleProvider>(context, listen: false).addPerson(newPerson);
+      if (await Provider.of<PeopleProvider>(context, listen: false)
+          .addPerson(newPerson)) {
+        _showSnackBar('Person added successfully!');
+      } else {
+        _showSnackBar('Could not add person!');
+      }
+
       if (mounted) {
         Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
       }
-
-      if (isSuccess = true) {
-        _showSnackBar('Person added successfully!');
-      } else {
-        _showSnackBar('Could not add person. Something went wrong!!');
-      }
-
       if (widget.onPersonAdded != null) {
         widget.onPersonAdded!();
       }

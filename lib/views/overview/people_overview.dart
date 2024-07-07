@@ -3,7 +3,7 @@ import 'package:galaxy/model/person_model.dart';
 import 'package:galaxy/provider/people_provider.dart';
 import 'package:galaxy/views/details/person_details.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class PeopleOverview extends StatelessWidget {
   final List<PersonModel> personList;
@@ -12,12 +12,16 @@ class PeopleOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('$personList before loading people overview page 1');
     return Scaffold(
-      body: _buildPersonList(),
+      body: _buildPersonList(context),
     );
   }
 
-  Widget _buildPersonList() {
+  Widget _buildPersonList(BuildContext context) {
+    print('$personList before loading people overview page 2');
+    if (personList.isNotEmpty) {
+      print('$personList before loading people overview page 3');
       return ListView.builder(
         itemCount: personList.length,
         itemBuilder: (context, index) {
@@ -25,11 +29,12 @@ class PeopleOverview extends StatelessWidget {
           return Card(
             child: ListTile(
               leading: _buildAvatar(person),
-              title: Text(person.name!),
+              title: Text(person.name ?? 'Unknown Name'),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (person.profession != null && person.profession!.isNotEmpty)
+                  if (person.profession != null &&
+                      person.profession!.isNotEmpty)
                     Text(person.profession!),
                   if (person.relation != null && person.relation!.isNotEmpty)
                     Text('(${person.relation!})'),
@@ -43,7 +48,8 @@ class PeopleOverview extends StatelessWidget {
                       ? IconButton(
                           icon: const Icon(Icons.email),
                           onPressed: () {
-                            launch('mailto:${person.emailAddresses![0]}');
+                            launchUrlString(
+                                'mailto:${person.emailAddresses![0]}');
                           },
                         )
                       : IconButton(
@@ -60,7 +66,7 @@ class PeopleOverview extends StatelessWidget {
                       ? IconButton(
                           icon: const Icon(Icons.phone),
                           onPressed: () {
-                            launch('tel:${person.phoneNumbers![0]}');
+                            launchUrlString('tel:${person.phoneNumbers![0]}');
                           },
                         )
                       : IconButton(
@@ -84,15 +90,19 @@ class PeopleOverview extends StatelessWidget {
                     ),
                   ),
                 ).then((value) {
-                  // Refresh the list when returning from details page
-                  Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
+                  if (context.mounted) {
+                    Provider.of<PeopleProvider>(context, listen: false)
+                        .refreshPeople();
+                  }
                 });
               },
             ),
           );
         },
       );
-    // }
+    } else {
+      return const Center(child: Text('No data found.'));
+    }
   }
 
   Widget _buildAvatar(PersonModel person) {

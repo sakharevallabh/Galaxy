@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:galaxy/helpers/people_database_helper.dart';
 import 'package:galaxy/model/person_model.dart';
+import 'package:galaxy/provider/people_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:searchfield/searchfield.dart';
 import 'package:share/share.dart';
 
@@ -24,7 +25,6 @@ class PersonDetailsPage extends StatefulWidget {
 
 class PersonDetailsPageState extends State<PersonDetailsPage> {
   late Future<PersonModel?> _personDetailsFuture;
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
   final Map<String, String> _selectedFields = {};
   final Map<String, TextEditingController> _controllers = {};
   final List<String> _genders = ['Male', 'Female'];
@@ -40,12 +40,13 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   @override
   void initState() {
     super.initState();
-    _personDetailsFuture = _fetchPersonDetails(widget.personId);
+    _personDetailsFuture = _fetchPersonDetails();
     _fetchData();
   }
 
-  Future<PersonModel?> _fetchPersonDetails(int personId) async {
-    return await _databaseHelper.getPersonById(personId);
+  Future<PersonModel?> _fetchPersonDetails() async {
+    return await Provider.of<PeopleProvider>(context, listen: false)
+        .getPersonById(widget.personId);
   }
 
   Future<void> _fetchData() async {
@@ -177,17 +178,19 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       'photo': _photo,
     };
 
-    try {
-      await _databaseHelper.updatePerson(widget.personId, updatedData);
-      if (mounted) {
+    bool success = await Provider.of<PeopleProvider>(context, listen: false)
+        .updatePerson(widget.personId, updatedData);
+
+    if (!mounted) return;
+
+    if (mounted) {
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Details updated successfully!')),
         );
-      }
-    } catch (error) {
-      if (mounted) {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating details: $error')),
+          const SnackBar(content: Text('Error updating person details!')),
         );
       }
     }
@@ -231,9 +234,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         _dob = picked;
         _controllers['Date of Birth']!.text =
             DateFormat('yyyy-MM-dd').format(picked);
-        // WidgetsBinding.instance.addPostFrameCallback((_) {
-          _controllers['Age']!.text = _calculateAge(picked).toString();
-        // });
+        _controllers['Age']!.text = _calculateAge(picked).toString();
       });
     }
   }
@@ -259,9 +260,22 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
 
   Future<bool> _deletePerson(int personId) async {
     try {
-      final bool success = await _databaseHelper.deletePerson(personId);
+       bool success = await Provider.of<PeopleProvider>(context, listen: false)
+        .deletePerson(widget.personId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Person deleted successfully!'
+                  : 'Error deleting person!',
+            ),
+          ),
+        );
+      }
+      await Future.delayed(const Duration(seconds: 1));
       return success;
-    } catch (e) {
+    } catch (error) {
       return false;
     }
   }
@@ -302,47 +316,44 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
               title: Text(person.name ?? 'Person Details'),
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () async {
-                    final personId = person.id;
-                    bool success;
-                    success = await showDialog(
-                      context: context,
-                      builder: (BuildContext context) => AlertDialog(
-                        title: const Text('Confirm Delete'),
-                        content: const Text('Are you sure you want to delete?'),
-                        actions: <Widget>[
-                          TextButton(
-                            child: const Text('Cancel'),
-                            onPressed: () {
-                              Navigator.of(context).pop(false);
-                            },
-                          ),
-                          TextButton(
-                            child: const Text('Delete'),
-                            onPressed: () async {
-                              bool result = await _deletePerson(personId!);
-                              Navigator.of(context).pop(result);
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-
-                    if (success) {
-                      if (mounted) {
-                        Navigator.of(context).pop();
-                      }
-                    } else {
-                      // Handle deletion failure
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Failed to delete person.'),
+                    icon: const Icon(Icons.delete),
+                    onPressed: () async {
+                      final personId = person.id;
+                      bool success;
+                      success = await showDialog(
+                        context: context,
+                        builder: (BuildContext context) => AlertDialog(
+                          title: const Text('Confirm Delete'),
+                          content:
+                              const Text('Are you sure you want to delete?'),
+                          actions: <Widget>[
+                            TextButton(
+                              child: const Text('Cancel'),
+                              onPressed: () {
+                                Navigator.of(context).pop(false);
+                              },
+                            ),
+                            TextButton(
+                              child: const Text('Delete'),
+                              onPressed: () async {
+                                bool result = await _deletePerson(personId!);
+                                Navigator.of(context).pop(result);
+                              },
+                            ),
+                          ],
                         ),
                       );
-                    }
-                  },
-                ),
+                      if (success) {
+                        Navigator.of(context).pop();
+                      } else {
+                        // Handle deletion failure
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Did not delete person.'),
+                          ),
+                        );
+                      }
+                    }),
               ],
             ),
             floatingActionButton: Column(

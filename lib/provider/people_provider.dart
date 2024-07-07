@@ -40,8 +40,32 @@ class PeopleProvider with ChangeNotifier {
     await _fetchPeople();
   }
 
+  Future<PersonModel?> getPersonById(int personId) async {
+    return await _databaseHelper.getPersonById(personId);
+  }
+
+  Future<bool> updatePerson(int personId, Map<String, dynamic> updatedData) async {
+    try {
+      await _databaseHelper.updatePerson(personId, updatedData);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+
+  Future<bool> deletePerson(int personId) async {
+    try {
+      await _databaseHelper.deletePerson(personId);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   void filterList(String query) {
     if (query.isEmpty) {
+      _fetchPeople();
       notifyListeners();
       return;
     }
