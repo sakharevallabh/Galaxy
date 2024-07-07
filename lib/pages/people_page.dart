@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/helpers/people_database_helper.dart';
-import 'package:galaxy/model/person_model.dart';
 import 'package:galaxy/provider/people_provider.dart';
-import 'package:galaxy/views/overview/people_overview.dart';
 import 'package:galaxy/views/forms/add_person.dart';
+import 'package:galaxy/views/overview/people_overview.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,8 +14,6 @@ class PeoplePage extends StatefulWidget {
 
 class PeoplePageState extends State<PeoplePage> {
   int _selectedIndex = 0;
-  DatabaseHelper databaseHelper = DatabaseHelper();
-  late PeopleProvider peopleProvider;
 
   @override
   void initState() {
@@ -70,31 +66,10 @@ class PeoplePageState extends State<PeoplePage> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    peopleProvider = Provider.of<PeopleProvider>(context);
+    PeopleProvider peopleProvider = Provider.of<PeopleProvider>(context);
     final personList = peopleProvider.personList;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('People'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate:
-                    PeopleSearchDelegate(peopleProvider.filterList, personList),
-              );
-            },
-          ),
-        ],
-      ),
       body: _selectedIndex == 0
           ? PeopleOverview(personList: personList)
           : const AddPersonView(),
@@ -136,63 +111,5 @@ class PeopleNavigationBar extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-class PeopleSearchDelegate extends SearchDelegate<String> {
-  final Function(String) filterCallback;
-  final List<PersonModel> personList;
-
-  PeopleSearchDelegate(this.filterCallback, this.personList);
-
-  @override
-  List<Widget> buildActions(BuildContext context) {
-    return [
-      IconButton(
-        icon: const Icon(Icons.clear),
-        onPressed: () {
-          query = '';
-          Future.microtask(() => filterCallback(query));
-          Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
-        },
-      ),
-    ];
-  }
-
-  @override
-  Widget buildLeading(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.arrow_back),
-      onPressed: () {
-        close(context, '');
-        Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
-      },
-    );
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
-    Future.microtask(() => filterCallback(query));
-    final filteredList = personList.where((person) {
-      final lowerCaseQuery = query.toLowerCase();
-      return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
-          (person.relation?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
-          (person.profession?.toLowerCase().contains(lowerCaseQuery) ?? false);
-    }).toList();
-
-    return PeopleOverview(personList: filteredList);
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    Future.microtask(() => filterCallback(query));
-    final filteredList = personList.where((person) {
-      final lowerCaseQuery = query.toLowerCase();
-      return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
-          (person.relation?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
-          (person.profession?.toLowerCase().contains(lowerCaseQuery) ?? false);
-    }).toList();
-
-    return PeopleOverview(personList: filteredList);
   }
 }
