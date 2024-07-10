@@ -81,7 +81,13 @@ class DatabaseHelper {
     final List<Map<String, dynamic>> maps = await db.query(
       tablePeople,
       columns: [
-        'id', 'name', 'profession', 'relation', 'photo', 'emailAddresses', 'phoneNumbers'
+        'id',
+        'name',
+        'profession',
+        'relation',
+        'photo',
+        'emailAddresses',
+        'phoneNumbers'
       ],
     );
 
@@ -140,19 +146,6 @@ class DatabaseHelper {
         tablePeople,
         where: 'id = ?',
         whereArgs: [id],
-      );
-      return count > 0;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<bool> deleteField(int personId, String fieldName) async {
-    try {
-      Database db = await database;
-      int count = await db.rawDelete(
-        'UPDATE $tablePeople SET $fieldName = null WHERE id = ?',
-        [personId],
       );
       return count > 0;
     } catch (e) {

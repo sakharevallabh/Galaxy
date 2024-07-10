@@ -44,6 +44,11 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     _fetchData();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<PersonModel?> _fetchPersonDetails() async {
     return await Provider.of<PeopleProvider>(context, listen: false)
         .getPersonById(widget.personId);
@@ -258,10 +263,24 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     }
   }
 
+  Future<bool> _deleteSelectedFields(int personId) async {
+    try {
+      for (String fieldName in _selectedFields.keys) {
+        if (fieldName != "Name") {
+          _controllers[fieldName]!.text = '';
+        }
+      }
+      _updatePerson();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<bool> _deletePerson(int personId) async {
     try {
-       bool success = await Provider.of<PeopleProvider>(context, listen: false)
-        .deletePerson(widget.personId);
+      bool success = await Provider.of<PeopleProvider>(context, listen: false)
+          .deletePerson(widget.personId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -336,7 +355,13 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
                             TextButton(
                               child: const Text('Delete'),
                               onPressed: () async {
-                                bool result = await _deletePerson(personId!);
+                                bool result = true;
+                                if (_selectedFields.isNotEmpty) {
+                                  result =
+                                      await _deleteSelectedFields(personId!);
+                                } else {
+                                  result = await _deletePerson(personId!);
+                                }
                                 Navigator.of(context).pop(result);
                               },
                             ),

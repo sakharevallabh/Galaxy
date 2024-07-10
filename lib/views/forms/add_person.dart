@@ -511,7 +511,7 @@ class AddPersonViewState extends State<AddPersonView> {
               _buildTextFields('Present Address', TextInputType.text),
               _buildTextFields('Present Pincode', TextInputType.number),
               _buildSearchFields('Present Country', _countries),
-              _buildTextFields('Permanent Address', TextInputType.number),
+              _buildTextFields('Permanent Address', TextInputType.text),
               _buildSearchFields('Marital Status', _maritalStatuses),
               _buildSearchFields('Profession', _professions),
               _buildPhoneNumberFields('Phone Number', _phoneNumbers),

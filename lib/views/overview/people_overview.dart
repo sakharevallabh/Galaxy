@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:galaxy/model/person_model.dart';
 import 'package:galaxy/provider/people_provider.dart';
 import 'package:galaxy/views/details/person_details.dart';
+import 'package:galaxy/widget/people_list_view.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class PeopleOverview extends StatefulWidget {
   final List<PersonModel> personList;
@@ -18,44 +18,82 @@ class PeopleOverviewState extends State<PeopleOverview> {
   final Set<int> _selectedIds = {};
   bool _selectModeOn = false;
 
+ @override
+  void initState() {
+    super.initState();
+    _refreshPeople();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('People Overview'),
+        title: Text(_selectModeOn
+            ? '${_selectedIds.length} selected'
+            : 'People Overview'),
+        leading: _selectModeOn
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () {
+                  setState(() {
+                    _selectModeOn = false;
+                    _selectedIds.clear();
+                  });
+                },
+              )
+            : null,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              _selectModeOn = false;
-              showSearch(
-                context: context,
-                delegate: PeopleSearchDelegate(
-                  personList: widget.personList,
-                  selectedIds: _selectedIds,
-                  selectModeOn: _selectModeOn,
-                  showListMenu: _showListMenu,
-                  selectPerson: _selectPerson,
-                  openPersonDetails: _openPersonDetails,
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {
-              _showSettingsMenu(context);
-            },
-          ),
+          if (_selectModeOn)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _deleteSelectedPersons,
+            )
+          else ...[
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                _selectModeOn = false;
+                showSearch(
+                  context: context,
+                  delegate: PeopleSearchDelegate(
+                    personList: widget.personList,
+                    selectedIds: _selectedIds,
+                    selectModeOn: _selectModeOn,
+                    showListMenu: _showListMenu,
+                    selectPerson: _selectPerson,
+                    openPersonDetails: _openPersonDetails,
+                  ),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.more_vert),
+              onPressed: () {
+                _showSettingsMenu(context);
+              },
+            ),
+          ],
         ],
       ),
-      body: _buildPersonList(context, widget.personList),
+      body: PeopleListView(
+        personList: widget.personList,
+        selectedIds: _selectedIds,
+        selectModeOn: _selectModeOn,
+        selectPerson: _selectPerson,
+        openPersonDetails: _openPersonDetails,
+        showListMenu: _showListMenu,
+      ),
     );
   }
 
   Future<void> _deletePerson(
-      BuildContext context, int personId, String personName) async {
-    bool success = await Provider.of<PeopleProvider>(context, listen: false)
+      BuildContext parentContext, int personId, String personName) async {
+    bool success = await Provider.of<PeopleProvider>(parentContext, listen: false)
         .deletePerson(personId);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -78,6 +116,10 @@ class PeopleOverviewState extends State<PeopleOverview> {
         _selectedIds.add(personId);
       }
     });
+  }
+
+  void _importFromContacts() {
+    print("Add code to import from contacts...");
   }
 
   void _openPersonDetails(
@@ -139,13 +181,35 @@ class PeopleOverviewState extends State<PeopleOverview> {
       position: const RelativeRect.fromLTRB(1000.0, 80.0, 0.0, 0.0),
       items: [
         PopupMenuItem(
-          value: 'delete_selected',
-          onTap: () => _deleteSelectedPersons(),
-          child: const Text('Delete Selected'),
+          value: 'import_contacts',
+          onTap: () => _importFromContacts(),
+          child: const Text('Import From Contacts'),
         ),
         PopupMenuItem(
           value: 'delete_all',
-          onTap: () => _deleteAllPersons(),
+          onTap: () async {
+            await showDialog(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('Confirm Delete'),
+                content: const Text('Are you sure you want to delete?'),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('Cancel'),
+                    onPressed: () {
+                      Navigator.of(context).pop(false);
+                    },
+                  ),
+                  TextButton(
+                    child: const Text('Delete'),
+                    onPressed: () async {
+                      await _deleteAllPersons(context);
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
           child: const Text('Delete All'),
         ),
       ],
@@ -159,128 +223,24 @@ class PeopleOverviewState extends State<PeopleOverview> {
     }
     setState(() {
       _selectedIds.clear();
+      _selectModeOn = false;
     });
   }
 
-  void _deleteAllPersons() {
+  Future<void> _deleteAllPersons(BuildContext parentContext) async {
     final peopleProvider = Provider.of<PeopleProvider>(context, listen: false);
     for (PersonModel person in peopleProvider.personList.toList()) {
       _deletePerson(context, person.id!, person.name!);
     }
     setState(() {
       _selectedIds.clear();
+      _selectModeOn = false;
     });
+      Navigator.of(parentContext).pop();
   }
 
   void _refreshPeople() {
     Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
-  }
-
-  Widget _buildPersonList(BuildContext context, List<PersonModel> personList) {
-    if (personList.isNotEmpty) {
-      return ListView.builder(
-        itemCount: personList.length,
-        itemBuilder: (context, index) {
-          PersonModel person = personList[index];
-          bool isSelected = _selectedIds.contains(person.id!);
-          return GestureDetector(
-            onLongPressStart: (details) {
-              _showListMenu(
-                context,
-                person.id!,
-                person.name!,
-                details.globalPosition,
-              );
-            },
-            child: PersonListItem(
-              person: person,
-              isSelected: isSelected,
-              selectModeOn: _selectModeOn,
-              onTap: () {
-                if (_selectModeOn) {
-                  _selectPerson(person.id!, person.name!);
-                } else {
-                  _openPersonDetails(context, person.id!, person.name!);
-                }
-              },
-            ),
-          );
-        },
-      );
-    } else {
-      return const Center(child: Text('No data found.'));
-    }
-  }
-}
-
-class PersonListItem extends StatelessWidget {
-  final PersonModel person;
-  final bool isSelected;
-  final bool selectModeOn;
-  final VoidCallback onTap;
-
-  const PersonListItem({
-    required this.person,
-    required this.isSelected,
-    required this.selectModeOn,
-    required this.onTap,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: isSelected ? Colors.lightBlueAccent : null,
-      child: ListTile(
-        leading: _buildAvatar(person),
-        title: Text(person.name ?? 'Unknown Name'),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (person.profession != null && person.profession!.isNotEmpty)
-              Text(person.profession!),
-            if (person.relation != null && person.relation!.isNotEmpty)
-              Text('(${person.relation!})'),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (person.emailAddresses != null &&
-                person.emailAddresses!.isNotEmpty)
-              IconButton(
-                icon: const Icon(Icons.email),
-                onPressed: () {
-                  launchUrlString('mailto:${person.emailAddresses![0]}');
-                },
-              ),
-            if (person.phoneNumbers != null && person.phoneNumbers!.isNotEmpty)
-              IconButton(
-                icon: const Icon(Icons.phone),
-                onPressed: () {
-                  launchUrlString('tel:${person.phoneNumbers![0]}');
-                },
-              ),
-          ],
-        ),
-        onTap: onTap,
-      ),
-    );
-  }
-
-  Widget _buildAvatar(PersonModel person) {
-    return CircleAvatar(
-      child: person.photo != null
-          ? ClipOval(
-              child: Image.memory(
-                person.photo!,
-                fit: BoxFit.cover,
-                width: 60,
-                height: 60,
-              ),
-            )
-          : const Icon(Icons.person),
-    );
   }
 }
 
@@ -308,7 +268,7 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
         icon: const Icon(Icons.clear),
         onPressed: () {
           query = '';
-          selectModeOn = false;
+          // selectModeOn = false;
           showSuggestions(context);
         },
       ),
@@ -321,7 +281,7 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
       icon: const Icon(Icons.arrow_back),
       onPressed: () {
         close(context, '');
-        selectModeOn = false;
+        // selectModeOn = false;
         Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
       },
     );
@@ -334,8 +294,16 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
       return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
           (person.relation?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
           (person.profession?.toLowerCase().contains(lowerCaseQuery) ?? false);
-    });
-    return _buildFilteredList(context, filteredList.toList());
+    }).toList();
+
+    return PeopleListView(
+      personList: filteredList,
+      selectedIds: selectedIds,
+      selectModeOn: selectModeOn,
+      selectPerson: selectPerson,
+      openPersonDetails: openPersonDetails,
+      showListMenu: showListMenu,
+    );
   }
 
   @override
@@ -345,44 +313,15 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
       return (person.name?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
           (person.relation?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
           (person.profession?.toLowerCase().contains(lowerCaseQuery) ?? false);
-    });
-    return _buildFilteredList(context, filteredList.toList());
-  }
+    }).toList();
 
-  Widget _buildFilteredList(
-      BuildContext context, List<PersonModel> filteredList) {
-    if (filteredList.isNotEmpty) {
-      return ListView.builder(
-        itemCount: filteredList.length,
-        itemBuilder: (context, index) {
-          PersonModel person = filteredList[index];
-          bool isSelected = selectedIds.contains(person.id!);
-          return GestureDetector(
-            onLongPressStart: (details) {
-              showListMenu(
-                context,
-                person.id!,
-                person.name!,
-                details.globalPosition,
-              );
-            },
-            child: PersonListItem(
-              person: person,
-              isSelected: isSelected,
-              selectModeOn: selectModeOn,
-              onTap: () {
-                if (selectModeOn) {
-                  selectPerson(person.id!, person.name!);
-                } else {
-                  openPersonDetails(context, person.id!, person.name!);
-                }
-              },
-            ),
-          );
-        },
-      );
-    } else {
-      return const Center(child: Text('No data found.'));
-    }
+    return PeopleListView(
+      personList: filteredList,
+      selectedIds: selectedIds,
+      selectModeOn: selectModeOn,
+      selectPerson: selectPerson,
+      openPersonDetails: openPersonDetails,
+      showListMenu: showListMenu,
+    );
   }
 }

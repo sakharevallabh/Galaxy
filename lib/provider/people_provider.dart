@@ -53,7 +53,6 @@ class PeopleProvider with ChangeNotifier {
     }
   }
 
-
   Future<bool> deletePerson(int personId) async {
     try {
       await _databaseHelper.deletePerson(personId);
