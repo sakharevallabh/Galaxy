@@ -34,7 +34,6 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   DateTime? _dob;
   List<String> _countries = [];
   List<String> _professions = [];
-  List<String> _interests = [];
   List<String> _relations = [];
 
   @override
@@ -46,6 +45,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
 
   @override
   void dispose() {
+    _controllers.forEach((key, controller) => controller.dispose());
     super.dispose();
   }
 
@@ -57,7 +57,6 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   Future<void> _fetchData() async {
     await _fetchCountries();
     await _fetchProfessions();
-    await _fetchInterests();
     await _fetchRelations();
   }
 
@@ -88,16 +87,13 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     _addController('Permanent Address', person.permanentAddress ?? '');
     _addController('Marital Status', person.maritalStatus ?? '');
     _addController('Profession', person.profession ?? '');
+    _addController('Interests', person.interests?.join(', ') ?? '');
 
-    // Initialize controllers for dynamic fields based on lists
+    // Initialize controllers for dynamic fields based on lis ts
     _initializeListControllers('Phone Number', person.phoneNumbers);
     _initializeListControllers('Email Address', person.emailAddresses);
     _initializeListControllers('Link', person.links);
     _initializeEducationControllers(person.educationDetails);
-
-    // Initialize Interests controller
-    _controllers['Interests'] =
-        TextEditingController(text: person.interests?.join(', ') ?? '');
   }
 
   void _addController(String key, [String? value]) {
@@ -179,7 +175,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       'emailAddresses': _toJsonList(updatedEmailAddresses),
       'links': _toJsonList(updatedLinks),
       'educationDetails': _toJsonList(updatedEducationDetails),
-      // 'interests': _toJsonList(_person!.interests),
+      'interests': _toJsonList(_controllers['Interests']!.text.split(",")),
       'photo': _photo,
     };
 
@@ -438,7 +434,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
                         TextInputType.emailAddress),
                     _buildNewFields('Link', person.links!, TextInputType.url),
                     _buildDynamicEducationFields(person.educationDetails),
-                    _buildMultiSelectField('Interests', person.interests!),
+                    _buildEditableField('Interests', TextInputType.text),
+                    const SizedBox(height: 120),
                   ],
                 ),
               ),
@@ -575,54 +572,6 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     );
   }
 
-  Widget _buildMultiSelectField(String label, List<String> selectedItems) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 16.0),
-          ),
-          Wrap(
-            children: selectedItems.map((item) {
-              return Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Chip(
-                  label: Text(item),
-                  deleteIcon: const Icon(Icons.close),
-                  onDeleted: () {
-                    setState(() {
-                      selectedItems.remove(item);
-                      _controllers[label]!.text = selectedItems.join(', ');
-                    });
-                  },
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _controllers[label],
-            decoration: InputDecoration(
-              labelText: 'Add $label',
-              border: const OutlineInputBorder(),
-            ),
-            onSubmitted: (value) {
-              if (value.isNotEmpty) {
-                setState(() {
-                  selectedItems.add(value);
-                  _controllers[label]!.text = selectedItems.join(', ');
-                });
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   void _addPhoneNumber(List<String> phoneNumbers) {
     setState(() {
       _addController('Phone Number ${phoneNumbers.length + 1}', '');
@@ -712,15 +661,6 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     final List<dynamic> data = jsonDecode(responseProfessions);
     setState(() {
       _professions = data.map((professions) => professions.toString()).toList();
-    });
-  }
-
-  Future<void> _fetchInterests() async {
-    final String responseInterests =
-        await rootBundle.loadString('assets/data/person_interests.json');
-    final List<dynamic> data = jsonDecode(responseInterests);
-    setState(() {
-      _interests = data.map((interests) => interests.toString()).toList();
     });
   }
 

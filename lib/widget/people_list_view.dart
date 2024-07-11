@@ -91,14 +91,15 @@ class PersonListItem extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (person.emailAddresses?[0] != null && person.emailAddresses![0].isNotEmpty || person.phoneNumbers?[0] != null && person.phoneNumbers![0].isNotEmpty)
+            if ((person.emailAddresses != null && person.emailAddresses!.isNotEmpty && person.emailAddresses![0].isNotEmpty) || 
+                (person.phoneNumbers != null && person.phoneNumbers!.isNotEmpty && person.phoneNumbers![0].isNotEmpty))
               IconButton(
                 icon: const Icon(Icons.email),
                 onPressed: () {
                   _showCommunicationMenu(context, person);
                 },
               ),
-            if (person.phoneNumbers?[0] != null && person.phoneNumbers![0].isNotEmpty)
+            if (person.phoneNumbers != null && person.phoneNumbers!.isNotEmpty && person.phoneNumbers![0].isNotEmpty)
               IconButton(
                 icon: const Icon(Icons.phone),
                 onPressed: () {
@@ -148,6 +149,14 @@ class PersonListItem extends StatelessWidget {
               title: const Text('Send WhatsApp Message'),
               onTap: () {
                 launchUrlString('https://wa.me/${person.phoneNumbers![0]}?text=Hi');
+                Navigator.of(context).pop();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.message),
+              title: const Text('Send SMS'),
+              onTap: () {
+                launchUrlString('sms:${person.phoneNumbers![0]}');
                 Navigator.of(context).pop();
               },
             ),

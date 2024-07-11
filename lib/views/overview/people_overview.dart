@@ -18,9 +18,10 @@ class PeopleOverviewState extends State<PeopleOverview> {
   final Set<int> _selectedIds = {};
   bool _selectModeOn = false;
 
- @override
+  @override
   void initState() {
     super.initState();
+    _selectModeOn = false;
     _refreshPeople();
   }
 
@@ -236,7 +237,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
       _selectedIds.clear();
       _selectModeOn = false;
     });
-      Navigator.of(parentContext).pop();
+    Navigator.of(parentContext).pop();
   }
 
   void _refreshPeople() {
@@ -295,6 +296,12 @@ class PeopleSearchDelegate extends SearchDelegate<String> {
           (person.relation?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
           (person.profession?.toLowerCase().contains(lowerCaseQuery) ?? false);
     }).toList();
+
+    if (filteredList.isEmpty) {
+      return Center(
+        child: Text('No results found for "$query"'),
+      );
+    }
 
     return PeopleListView(
       personList: filteredList,
