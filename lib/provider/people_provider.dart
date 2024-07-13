@@ -62,6 +62,16 @@ class PeopleProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> deleteAllPeople() async {
+    try {
+      await _databaseHelper.deleteAllPeople();
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+
   void filterList(String query) {
     if (query.isEmpty) {
       _fetchPeople();

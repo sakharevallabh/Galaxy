@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:galaxy/pages/home_page.dart';
 import 'package:galaxy/pages/lock_screen.dart';
+import 'package:galaxy/provider/assets_data_provider.dart';
 import 'package:galaxy/provider/navigation_provider.dart';
 import 'package:galaxy/provider/people_provider.dart';
 import 'package:provider/provider.dart';
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
         providers: [
           ChangeNotifierProvider(create: (_) => NavigationProvider()),
           ChangeNotifierProvider(create: (_) => PeopleProvider()),
+          ChangeNotifierProvider(create: (_) => DataProvider()),
         ],
         child: MaterialApp(
           title: title,

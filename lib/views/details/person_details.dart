@@ -1,12 +1,16 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:galaxy/model/person_model.dart';
+import 'package:galaxy/provider/assets_data_provider.dart';
 import 'package:galaxy/provider/people_provider.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:galaxy/utils/age_calculator.dart';
+import 'package:galaxy/utils/image_utils.dart';
+import 'package:galaxy/utils/json_utils.dart';
+import 'package:galaxy/utils/share_utils.dart';
+import 'package:galaxy/widget/educationfield.dart';
+import 'package:galaxy/widget/searchfield.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:searchfield/searchfield.dart';
 import 'package:share/share.dart';
 
 class PersonDetailsPage extends StatefulWidget {
@@ -35,29 +39,38 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   List<String> _countries = [];
   List<String> _professions = [];
   List<String> _relations = [];
+  List<Map<String, String>> _educationDetails = [
+    {'degree': '', 'institution': '', 'year': ''}
+  ];
+  final List<TextEditingController> _degreeControllers = [];
+  final List<TextEditingController> _institutionControllers = [];
+  final List<TextEditingController> _yearControllers = [];
 
   @override
   void initState() {
     super.initState();
     _personDetailsFuture = _fetchPersonDetails();
-    _fetchData();
+    Provider.of<DataProvider>(context, listen: false).fetchData();
   }
 
   @override
   void dispose() {
     _controllers.forEach((key, controller) => controller.dispose());
+    for (var controller in _degreeControllers) {
+      controller.dispose();
+    }
+    for (var controller in _institutionControllers) {
+      controller.dispose();
+    }
+    for (var controller in _yearControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   Future<PersonModel?> _fetchPersonDetails() async {
     return await Provider.of<PeopleProvider>(context, listen: false)
         .getPersonById(widget.personId);
-  }
-
-  Future<void> _fetchData() async {
-    await _fetchCountries();
-    await _fetchProfessions();
-    await _fetchRelations();
   }
 
   void _initializePersonDetails(PersonModel person) {
@@ -68,8 +81,18 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       }
       if (person.dob != null && person.dob!.isNotEmpty) {
         _dob = DateFormat('yyyy-MM-dd').parse(person.dob!);
-        _controllers['Age']?.text = _calculateAge(_dob!).toString();
+        _controllers['Age']?.text = AgeCalculator.calculateAge(_dob!).toString();
       }
+
+      _educationDetails = person.educationDetails
+              ?.map((e) => {
+                    'degree': e['degree'] ?? '',
+                    'institution': e['institution'] ?? '',
+                    'year': e['year'] ?? '',
+                  })
+              .toList() ??
+          [];
+
       _isInitialized = true;
     }
   }
@@ -113,11 +136,17 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   void _initializeEducationControllers(
       List<Map<String, dynamic>>? educationDetails) {
     if (educationDetails != null) {
-      for (int i = 0; i < educationDetails.length; i++) {
-        var educationDetail = educationDetails[i];
-        _addController(educationDetail['type'], educationDetail['value']);
+      for (var detail in educationDetails) {
+        _addEducationController(
+            detail['degree'], detail['institution'], detail['year']);
       }
     }
+  }
+
+  void _addEducationController(String degree, String institution, String year) {
+    _degreeControllers.add(TextEditingController(text: degree));
+    _institutionControllers.add(TextEditingController(text: institution));
+    _yearControllers.add(TextEditingController(text: year));
   }
 
   Future<void> _updatePerson() async {
@@ -148,16 +177,13 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       }
     });
 
-    // Similarly, collect updated education details
-    List<Map<String, String>> updatedEducationDetails = [];
-    _controllers.forEach((key, controller) {
-      if (key.startsWith('Education')) {
-        updatedEducationDetails.add({
-          'type': key.replaceFirst('Education ', ''),
-          'value': controller.text,
-        });
-      }
-    });
+    // Collecting updated education details
+    List<Map<String, String>> updatedEducationDetails = _educationDetails
+        .where((edu) =>
+            edu['degree']!.isNotEmpty ||
+            edu['institution']!.isNotEmpty ||
+            edu['year']!.isNotEmpty)
+        .toList();
 
     final Map<String, dynamic> updatedData = {
       'name': _controllers['Name']!.text,
@@ -171,12 +197,12 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
       'permanentAddress': _controllers['Permanent Address']!.text,
       'maritalStatus': _controllers['Marital Status']!.text,
       'profession': _controllers['Profession']!.text,
-      'phoneNumbers': _toJsonList(updatedPhoneNumbers),
-      'emailAddresses': _toJsonList(updatedEmailAddresses),
-      'links': _toJsonList(updatedLinks),
-      'educationDetails': _toJsonList(updatedEducationDetails),
-      'interests': _toJsonList(_controllers['Interests']!.text.split(",")),
-      'photo': _photo,
+      'phoneNumbers': JsonUtils.toJsonList(updatedPhoneNumbers),
+      'emailAddresses': JsonUtils.toJsonList(updatedEmailAddresses),
+      'links': JsonUtils.toJsonList(updatedLinks),
+      'educationDetails': JsonUtils.toJsonList(updatedEducationDetails),
+      'interests': JsonUtils.toJsonList(_controllers['Interests']!.text.split(",")),
+       'photo': _photo,
     };
 
     bool success = await Provider.of<PeopleProvider>(context, listen: false)
@@ -197,30 +223,12 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     }
   }
 
-  String? _toJsonList(List<dynamic>? items) {
-    if (items != null) {
-      var jsonEncoder = const JsonEncoder();
-      return jsonEncoder.convert(items);
-    }
-    return null;
-  }
-
   void _toggleFieldSelection(String fieldName) {
     setState(() {
       _selectedFields.containsKey(fieldName)
           ? _selectedFields.remove(fieldName)
           : _selectedFields[fieldName] = _controllers[fieldName]?.text ?? '';
     });
-  }
-
-  int _calculateAge(DateTime birthDate) {
-    DateTime today = DateTime.now();
-    int age = today.year - birthDate.year;
-    if (today.month < birthDate.month ||
-        (today.month == birthDate.month && today.day < birthDate.day)) {
-      age--;
-    }
-    return age;
   }
 
   void _selectDate(BuildContext context) async {
@@ -235,29 +243,19 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         _dob = picked;
         _controllers['Date of Birth']!.text =
             DateFormat('yyyy-MM-dd').format(picked);
-        _controllers['Age']!.text = _calculateAge(picked).toString();
+        _controllers['Age']!.text = AgeCalculator.calculateAge(picked).toString();
       });
     }
   }
 
-  void _pickImage() async {
-    final picker = ImagePicker();
-    try {
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-      if (pickedFile != null) {
-        final bytes = await pickedFile.readAsBytes();
-        setState(() {
-          _photo = bytes;
-        });
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $error')),
-        );
-      }
-    }
+void _pickImage() async {
+  final bytes = await ImageUtils.pickImage();
+  if (bytes != null) {
+    setState(() {
+      _photo = bytes;
+    });
   }
+}
 
   Future<bool> _deleteSelectedFields(int personId) async {
     try {
@@ -296,7 +294,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   }
 
   void _shareSelectedFields() {
-    String details = generateShareableDetails(_selectedFields);
+    String details = ShareUtils.generateShareableDetails(_selectedFields);
     Share.share(details);
   }
 
@@ -306,8 +304,154 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         .join('\n');
   }
 
+  Widget _buildGestureDetector(
+      String fieldName, List<String>? suggestions, String type, int? index, [TextInputType keyboardType = TextInputType.text]) {
+    return GestureDetector(
+      onTap: () => _toggleFieldSelection(fieldName),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: _selectedFields.containsKey(fieldName)
+                ? Colors.blue
+                : Colors.grey,
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              fieldName,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            _buildFieldByType(type, fieldName, suggestions, index, keyboardType),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFieldByType(
+      String type, String fieldName, List<String>? suggestions, int? index, [TextInputType keyboardType = TextInputType.text]) {
+    switch (type) {
+      case 'searchfield':
+        return SearchableField(
+          fieldName: fieldName,
+          suggestions: suggestions!,
+          controller: _controllers.putIfAbsent(
+          fieldName, () => TextEditingController()),
+        );
+      case 'datefield':
+        return TextFormField(
+              controller: _controllers[fieldName],
+              readOnly: true,
+              decoration: InputDecoration(
+                hintText: 'Enter $fieldName',
+              ),
+              onTap: () => _selectDate(context),
+            );
+      case 'educationfield':
+        return EducationField(
+            index: index!,
+            degreeControllers: _degreeControllers,
+            institutionControllers: _institutionControllers,
+            yearControllers: _yearControllers,
+            educationDetails: _educationDetails,
+          );
+      case 'editablefield':
+        return TextFormField(
+            controller: _controllers[fieldName],
+            readOnly: fieldName == 'Age',
+            decoration: InputDecoration(
+            hintText: 'Enter $fieldName',
+            ),
+            keyboardType: keyboardType,
+            onChanged: (value) {
+            setState(() {
+              _controllers[fieldName]?.text = value;
+              });
+            },
+         );          
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+void _addDynamicField(String label, List<String> items) {
+  setState(() {
+    _addController('$label ${items.length + 1}', '');
+    items.add('');
+  });
+}
+
+Widget _buildDynamicFields(String label, List<String> items, TextInputType keyboardType) {
+  return Column(
+    children: [
+      if (items.isNotEmpty)
+        _buildDynamicListFields(label, items, keyboardType),
+      ElevatedButton(
+        onPressed: () => _addDynamicField(label, items),
+        child: Text('Add $label'),
+      ),
+      const SizedBox(height: 10),
+    ],
+  );
+}
+
+Widget _buildDynamicListFields(String labelPrefix, List<String>? items, TextInputType keyboardType) {
+  return Column(
+    children: List.generate(items!.length, (i) {
+      return Row(
+        children: [
+          Expanded(
+            child: _buildGestureDetector(
+              '$labelPrefix ${i + 1}',
+              null,
+              'editablefield',
+              null,
+              keyboardType,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.black),
+            onPressed: () {
+              setState(() {
+                items.removeAt(i);
+                _controllers.remove('$labelPrefix ${i + 1}');
+              });
+            },
+          ),
+        ],
+      );
+    }),
+  );
+}
+
+  Widget _buildEducationFields() {
+    return Column(
+      children: [
+        for (int i = 1; i < _educationDetails.length+1; i++)
+        _buildGestureDetector('Education Details $i', null, 'educationfield', i),
+        ElevatedButton(
+          onPressed: () {
+            setState(() {
+              _educationDetails.add({'degree': '', 'institution': '', 'year': ''});
+              _addEducationController('', '', '');
+            });
+          },
+          child: const Text('Add Education'),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final dataProvider = Provider.of<DataProvider>(context);
+
     return FutureBuilder<PersonModel?>(
       future: _personDetailsFuture,
       builder: (context, snapshot) {
@@ -406,35 +550,29 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
                           child: CircleAvatar(
                             radius: 90,
                             backgroundColor: Colors.grey[300],
-                            backgroundImage:
-                                _photo != null ? MemoryImage(_photo!) : null,
-                            child: _photo == null
-                                ? const Icon(Icons.person, size: 90)
-                                : null,
+                            backgroundImage: _photo != null ? MemoryImage(_photo!) : null,
+                            child: _photo == null ? const Icon(Icons.person, size: 90) : null,
                           ),
                         ),
                       ),
                     ),
-                    _buildEditableField('Name'),
-                    _buildSearchableField('Relation', _relations),
-                    _buildSearchableField('Gender', _genders),
-                    _buildDatePickerField('Date of Birth'),
-                    _buildEditableField('Age'),
-                    _buildEditableField('Place of Birth'),
-                    _buildEditableField('Present Address'),
-                    _buildSearchableField('Present Country', _countries),
-                    _buildEditableField(
-                        'Present Pincode', TextInputType.number),
-                    _buildEditableField('Permanent Address'),
-                    _buildSearchableField('Marital Status', _maritalStatuses),
-                    _buildSearchableField('Profession', _professions),
-                    _buildNewFields('Phone Number', person.phoneNumbers!,
-                        TextInputType.phone),
-                    _buildNewFields('Email Address', person.emailAddresses!,
-                        TextInputType.emailAddress),
-                    _buildNewFields('Link', person.links!, TextInputType.url),
-                    _buildDynamicEducationFields(person.educationDetails),
-                    _buildEditableField('Interests', TextInputType.text),
+                    _buildGestureDetector('Name', null, 'editablefield', null),
+                    _buildGestureDetector('Relation', dataProvider.relations, 'searchfield', null),
+                    _buildGestureDetector('Gender', _genders, 'searchfield',null),
+                    _buildGestureDetector('Date of Birth', null, 'datefield', null),
+                    _buildGestureDetector('Age', null, 'editablefield', null),
+                    _buildGestureDetector('Place of Birth', null, 'editablefield', null),
+                    _buildGestureDetector('Present Address', null, 'editablefield', null),
+                    _buildGestureDetector('Present Country', dataProvider.countries, 'searchfield', null),
+                    _buildGestureDetector('Present Pincode', null, 'editablefield', null, TextInputType.number),
+                    _buildGestureDetector('Permanent Address', null, 'editablefield', null),
+                    _buildGestureDetector('Marital Status', _maritalStatuses, 'searchfield', null),
+                    _buildGestureDetector('Profession', dataProvider.professions, 'searchfield', null),
+                    _buildDynamicFields('Phone Number', person.phoneNumbers!, TextInputType.phone),
+                    _buildDynamicFields('Email Address', person.emailAddresses!, TextInputType.emailAddress),
+                    _buildDynamicFields('Link', person.links!, TextInputType.url), 
+                    _buildEducationFields(),
+                    _buildGestureDetector('Interests', null, 'editablefield', null),
                     const SizedBox(height: 120),
                   ],
                 ),
@@ -444,232 +582,5 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         }
       },
     );
-  }
-
-  Widget _buildEditableField(String fieldName,
-      [TextInputType keyboardType = TextInputType.text]) {
-    return GestureDetector(
-      onTap: () => _toggleFieldSelection(fieldName),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: _selectedFields.containsKey(fieldName)
-                ? Colors.blue
-                : Colors.grey,
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              fieldName,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextFormField(
-              controller: _controllers[fieldName],
-              readOnly: fieldName == 'Age',
-              decoration: InputDecoration(
-                hintText: 'Enter $fieldName',
-              ),
-              keyboardType: keyboardType,
-              onChanged: (value) {
-                setState(() {
-                  _controllers[fieldName]?.text = value;
-                });
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDatePickerField(String fieldName) {
-    return GestureDetector(
-      onTap: () => _toggleFieldSelection(fieldName),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: _selectedFields.containsKey(fieldName)
-                ? Colors.blue
-                : Colors.grey,
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              fieldName,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextFormField(
-              controller: _controllers[fieldName],
-              readOnly: true,
-              decoration: InputDecoration(
-                hintText: 'Enter $fieldName',
-              ),
-              onTap: () => _selectDate(context),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchableField(String fieldName, List<String> suggestions) {
-    return GestureDetector(
-      onTap: () => _toggleFieldSelection(fieldName),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: _selectedFields.containsKey(fieldName)
-                ? Colors.blue
-                : Colors.grey,
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              fieldName,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SearchField(
-              controller: _controllers.putIfAbsent(
-                  fieldName, () => TextEditingController()),
-              suggestions: suggestions
-                  .where((suggestion) => suggestion
-                      .toLowerCase()
-                      .contains(_controllers[fieldName]!.text.toLowerCase()))
-                  .map((e) => SearchFieldListItem(e))
-                  .toList(),
-              searchInputDecoration: InputDecoration(
-                hintText: 'Enter $fieldName',
-              ),
-              maxSuggestionsInViewPort: 5,
-              onSearchTextChanged: (value) {
-                setState(() {
-                  _controllers[fieldName]!.text = value;
-                });
-                return null;
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _addPhoneNumber(List<String> phoneNumbers) {
-    setState(() {
-      _addController('Phone Number ${phoneNumbers.length + 1}', '');
-      phoneNumbers.add('');
-    });
-  }
-
-  void _addEmail(List<String> emailAddresses) {
-    setState(() {
-      _addController('Email Address ${emailAddresses.length + 1}', '');
-      emailAddresses.add('');
-    });
-  }
-
-  void _addLink(List<String> links) {
-    setState(() {
-      _addController('Link ${links.length + 1}', '');
-      links.add('');
-    });
-  }
-
-  Widget _buildNewFields(
-      String label, List<String> items, TextInputType keyboardType) {
-    return Column(
-      children: [
-        if (items.isNotEmpty)
-          _buildDynamicListFields(label, items, keyboardType),
-        ElevatedButton(
-          onPressed: () {
-            switch (label) {
-              case 'Phone Number':
-                _addPhoneNumber(items);
-                break;
-              case 'Email Address':
-                _addEmail(items);
-                break;
-              case 'Link':
-                _addLink(items);
-                break;
-              default:
-                break;
-            }
-          },
-          child: Text('Add $label'),
-        ),
-        const SizedBox(height: 10),
-      ],
-    );
-  }
-
-  Widget _buildDynamicListFields(
-      String labelPrefix, List<String>? items, TextInputType keyboardType) {
-    List<Widget> fields = [];
-    if (items != null) {
-      for (int i = 0; i < items.length; i++) {
-        fields.add(_buildEditableField('$labelPrefix ${i + 1}', keyboardType));
-      }
-    }
-    return Column(children: fields);
-  }
-
-  Widget _buildDynamicEducationFields(
-      List<Map<String, dynamic>>? educationDetails) {
-    List<Widget> fields = [];
-
-    if (educationDetails != null) {
-      for (int i = 0; i < educationDetails.length; i++) {
-        var educationDetail = educationDetails[i];
-        fields.add(_buildEditableField(educationDetail['type']));
-      }
-    }
-    return Column(children: fields);
-  }
-
-  Future<void> _fetchCountries() async {
-    final String responseCountries =
-        await rootBundle.loadString('assets/data/countries.json');
-    final List<dynamic> data = jsonDecode(responseCountries);
-    setState(() {
-      _countries = data.map((countries) => countries.toString()).toList();
-    });
-  }
-
-  Future<void> _fetchProfessions() async {
-    final String responseProfessions =
-        await rootBundle.loadString('assets/data/professions.json');
-    final List<dynamic> data = jsonDecode(responseProfessions);
-    setState(() {
-      _professions = data.map((professions) => professions.toString()).toList();
-    });
-  }
-
-  Future<void> _fetchRelations() async {
-    final String responseRelations =
-        await rootBundle.loadString('assets/data/person_relations.json');
-    final List<dynamic> data = jsonDecode(responseRelations);
-    setState(() {
-      _relations = data.map((relations) => relations.toString()).toList();
-    });
   }
 }

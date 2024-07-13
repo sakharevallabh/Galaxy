@@ -204,7 +204,7 @@ class PeopleOverviewState extends State<PeopleOverview> {
                   TextButton(
                     child: const Text('Delete'),
                     onPressed: () async {
-                      await _deleteAllPersons(context);
+                      await _deleteAllPeople(context);
                     },
                   ),
                 ],
@@ -228,17 +228,33 @@ class PeopleOverviewState extends State<PeopleOverview> {
     });
   }
 
-  Future<void> _deleteAllPersons(BuildContext parentContext) async {
-    final peopleProvider = Provider.of<PeopleProvider>(context, listen: false);
-    for (PersonModel person in peopleProvider.personList.toList()) {
-      _deletePerson(context, person.id!, person.name!);
+   Future<void> _deleteAllPeople(BuildContext parentContext) async {
+    bool success = await Provider.of<PeopleProvider>(parentContext, listen: false)
+        .deleteAllPeople();
+    if (mounted) {
+      _refreshPeople();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success ? 'All people deleted successfully!' : 'Error deleting!',
+          ),
+        ),
+      );
+      Navigator.of(parentContext).pop();
     }
-    setState(() {
-      _selectedIds.clear();
-      _selectModeOn = false;
-    });
-    Navigator.of(parentContext).pop();
   }
+
+  // Future<void> _deleteAllPersons(BuildContext parentContext) async {
+  //   final peopleProvider = Provider.of<PeopleProvider>(context, listen: false);
+  //   for (PersonModel person in peopleProvider.personList.toList()) {
+  //     _deletePerson(context, person.id!, person.name!);
+  //   }
+  //   setState(() {
+  //     _selectedIds.clear();
+  //     _selectModeOn = false;
+  //   });
+  //   Navigator.of(parentContext).pop();
+  // }
 
   void _refreshPeople() {
     Provider.of<PeopleProvider>(context, listen: false).refreshPeople();

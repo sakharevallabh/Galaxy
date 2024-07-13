@@ -153,6 +153,18 @@ class DatabaseHelper {
     }
   }
 
+  Future<bool> deleteAllPeople() async {
+  try {
+    Database db = await database;
+    await db.delete(
+      tablePeople,
+    );
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
   Future<void> closeDatabase() async {
     final db = await database;
     await db.close();

@@ -152,6 +152,7 @@ class PersonListItem extends StatelessWidget {
                 Navigator.of(context).pop();
               },
             ),
+            if (person.phoneNumbers != null && person.phoneNumbers!.isNotEmpty)
             ListTile(
               leading: const Icon(Icons.message),
               title: const Text('Send SMS'),

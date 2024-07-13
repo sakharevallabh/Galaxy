@@ -2,12 +2,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:galaxy/helpers/people_database_helper.dart';
-import 'package:galaxy/pages/people_page.dart';
 import 'package:galaxy/provider/people_provider.dart';
+import 'package:galaxy/widget/searchfield.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
-import 'package:searchfield/searchfield.dart';
 
 class AddPersonView extends StatefulWidget {
   final Function()? onPersonAdded;
@@ -26,6 +25,7 @@ class AddPersonViewState extends State<AddPersonView> {
   Uint8List? _photo;
   final Map<String, TextEditingController> _controllers = {
     'Name': TextEditingController(),
+    'Relation': TextEditingController(),
     'Gender': TextEditingController(),
     'Date of Birth': TextEditingController(),
     'Place of Birth': TextEditingController(),
@@ -35,7 +35,6 @@ class AddPersonViewState extends State<AddPersonView> {
     'Permanent Address': TextEditingController(),
     'Marital Status': TextEditingController(),
     'Profession': TextEditingController(),
-    'Relation': TextEditingController(),
   };
   final List<String> _maritalStatuses = ['Married', 'Unmarried', 'Divorced'];
   final List<String> _gender = ['Male', 'Female'];
@@ -54,7 +53,9 @@ class AddPersonViewState extends State<AddPersonView> {
   final List<String> _phoneNumbers = [];
   final List<String> _emailAddresses = [];
   final List<String> _links = [];
-  final List<Map<String, String>> _educationDetails = [];
+  final List<Map<String, String>> _educationDetails = [
+    {'degree': '', 'institution': '', 'year': ''}
+  ];
 
   @override
   void initState() {
@@ -120,7 +121,6 @@ class AddPersonViewState extends State<AddPersonView> {
   }
 
   void _showSnackBar(String message) {
-    // ScaffoldMessenger.of(context).removeCurrentSnackBar();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
@@ -133,17 +133,17 @@ class AddPersonViewState extends State<AddPersonView> {
       _formKey.currentState!.save();
 
       Map<String, dynamic> newPerson = {
-        'name': _controllers['Name']?.text,
-        'gender': _controllers['Gender']?.text,
-        'dob': _controllers['Date of Birth']?.text,
-        'birthPlace': _controllers['Place of Birth']?.text,
-        'presentAddress': _controllers['Present Address']?.text,
-        'presentPincode': _controllers['Present Pincode']?.text,
-        'presentCountry': _controllers['Present Country']?.text,
-        'permanentAddress': _controllers['Permanent Address']?.text,
-        'maritalStatus': _controllers['Marital Status']?.text,
-        'profession': _controllers['Profession']?.text,
-        'relation': _controllers['Relation']?.text,
+        'name': _controllers['Name']?.text.trim(),
+        'gender': _controllers['Gender']?.text.trim(),
+        'dob': _controllers['Date of Birth']?.text.trim(),
+        'birthPlace': _controllers['Place of Birth']?.text.trim(),
+        'presentAddress': _controllers['Present Address']?.text.trim(),
+        'presentPincode': _controllers['Present Pincode']?.text.trim(),
+        'presentCountry': _controllers['Present Country']?.text.trim(),
+        'permanentAddress': _controllers['Permanent Address']?.text.trim(),
+        'maritalStatus': _controllers['Marital Status']?.text.trim(),
+        'profession': _controllers['Profession']?.text.trim(),
+        'relation': _controllers['Relation']?.text.trim(),
         'photo': _photo,
         'interests': jsonEncode(_selectedInterests),
         'phoneNumbers': jsonEncode(_phoneNumbers),
@@ -198,7 +198,6 @@ class AddPersonViewState extends State<AddPersonView> {
       final String responseInterests =
           await rootBundle.loadString('assets/data/person_interests.json');
       await Future.delayed(const Duration(seconds: 1));
-
       setState(() {
         final List<dynamic> data = jsonDecode(responseInterests);
         _interests = data.map((interests) => interests.toString()).toList();
@@ -211,7 +210,6 @@ class AddPersonViewState extends State<AddPersonView> {
       final String responseRelations =
           await rootBundle.loadString('assets/data/person_relations.json');
       await Future.delayed(const Duration(seconds: 1));
-
       setState(() {
         final List<dynamic> data = jsonDecode(responseRelations);
         _relations = data.map((relations) => relations.toString()).toList();
@@ -219,219 +217,172 @@ class AddPersonViewState extends State<AddPersonView> {
     }
   }
 
-  void _addEducationField() {
-    setState(() {
-      _educationDetails.add({});
-    });
-  }
-
-  Widget _buildEducationFields() {
+  Widget _buildSearchFields(
+      {required String key, required List<String> suggestions}) {
     return Column(
-      children: _educationDetails.map((education) {
-        int index = _educationDetails.indexOf(education);
-        return Column(
-          children: [
-            DropdownButtonFormField<String>(
-              value: education['type'],
-              onChanged: (newValue) {
-                setState(() {
-                  _educationDetails[index]['type'] = newValue!;
-                  // Clear the value when the type changes
-                  _educationDetails[index]['value'] = '';
-                });
-              },
-              items: [
-                'Primary School Name',
-                'Secondary School Name',
-                'College Name',
-                'University Name',
-                'Institute Name',
-                'Course',
-                'Degree',
-              ].map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              decoration: const InputDecoration(labelText: 'Education Type'),
-            ),
-            if (education['type'] == 'Degree')
-              SearchField(
-                controller: TextEditingController(text: education['value']),
-                searchInputDecoration: const InputDecoration(
-                  labelText: 'Degree',
-                ),
-                maxSuggestionsInViewPort: 5,
-                autoCorrect: true,
-                suggestions: _degrees
-                    .map((e) => SearchFieldListItem(e, child: Text(e)))
-                    .toList(),
-                onSuggestionTap: (suggestion) {
-                  setState(() {
-                    _educationDetails[index]['value'] = suggestion.searchKey;
-                  });
-                },
-              )
-            else
-              TextFormField(
-                initialValue: education['value'],
-                onChanged: (newValue) {
-                  setState(() {
-                    _educationDetails[index]['value'] = newValue;
-                  });
-                },
-                decoration: InputDecoration(
-                  labelText: education['type'],
-                ),
-              ),
-            const SizedBox(height: 10),
-          ],
-        );
-      }).toList(),
-    );
-  }
-
-  void _addPhoneNumber(List<String> phoneNumbers, String type) {
-    setState(() {
-      phoneNumbers.add('');
-    });
-  }
-
-  void _addEmail(List<String> emailAddresses) {
-    setState(() {
-      emailAddresses.add('');
-    });
-  }
-
-  void _addLink(List<String> links) {
-    setState(() {
-      links.add('');
-    });
-  }
-
-  Widget _buildSearchFields(String fieldName, List<String> suggestions) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SearchField(
-          controller: _controllers[fieldName]!,
-          searchInputDecoration: InputDecoration(
-            labelText: fieldName,
-          ),
-          maxSuggestionsInViewPort: 5,
-          autoCorrect: true,
-          suggestions: suggestions
-              .map((e) => SearchFieldListItem(e, child: Text(e)))
-              .toList(),
+        SearchableField(
+          fieldName: key,
+          suggestions: suggestions,
+          controller: _controllers[key]!,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 16.0),
       ],
     );
   }
 
-  Widget _buildTextFields(String fieldName,
-      [TextInputType keyboardType = TextInputType.text]) {
+  Widget _buildTextFields(
+      {required String key, TextInputType inputType = TextInputType.text}) {
+    Icon suffixIcon;
+    if (key == "Name") {
+      suffixIcon = const Icon(Icons.person);
+    } else {
+      suffixIcon = const Icon(null);
+    }
+
+    if (key == "Present Pincode") {
+      inputType = TextInputType.number;
+    }
+
     return Column(
       children: [
         TextFormField(
-          controller: _controllers[fieldName],
-          keyboardType: keyboardType,
-          decoration: InputDecoration(labelText: fieldName),
+          key: Key(key),
+          controller: _controllers[key],
+          decoration: InputDecoration(
+            suffixIcon: suffixIcon,
+            labelText: key,
+            hintText: key,
+          ),
+          keyboardType: inputType,
+          validator: (value) =>
+              key == "Name" && (value == null || value.isEmpty)
+                  ? 'Please enter $key'
+                  : null,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 16.0),
       ],
     );
   }
 
-  Widget _buildPhoneNumberFields(String label, List<String> phoneNumbers) {
+  Widget _buildPhoneNumberFields() {
     return Column(
       children: [
-        for (int i = 0; i < phoneNumbers.length; i++)
+        for (int i = 0; i < _phoneNumbers.length; i++)
           TextFormField(
-            initialValue: phoneNumbers[i],
+            initialValue: _phoneNumbers[i],
+            decoration: InputDecoration(
+              labelText: 'Phone Number',
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () {
+                  setState(() {
+                    _phoneNumbers.removeAt(i);
+                  });
+                },
+              ),
+            ),
             keyboardType: TextInputType.phone,
-            onChanged: (newValue) {
-              setState(() {
-                phoneNumbers[i] = newValue;
-              });
+            onChanged: (value) {
+              _phoneNumbers[i] = value;
             },
-            decoration: InputDecoration(
-              labelText: '$label ${i + 1}',
-            ),
           ),
+        const SizedBox(height: 8),
         ElevatedButton(
-          onPressed: () => _addPhoneNumber(phoneNumbers, label),
-          child: Text('Add $label'),
+          onPressed: () {
+            setState(() {
+              _phoneNumbers.add('');
+            });
+          },
+          child: const Text('Add Phone Number'),
         ),
-        const SizedBox(height: 10),
       ],
     );
   }
 
-  Widget _buildEmailFields(String label, List<String> emailAddresses) {
+  Widget _buildEmailFields() {
     return Column(
       children: [
-        for (int i = 0; i < emailAddresses.length; i++)
+        for (int i = 0; i < _emailAddresses.length; i++)
           TextFormField(
-            initialValue: emailAddresses[i],
+            initialValue: _emailAddresses[i],
+            decoration: InputDecoration(
+              labelText: 'Email Address',
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () {
+                  setState(() {
+                    _emailAddresses.removeAt(i);
+                  });
+                },
+              ),
+            ),
             keyboardType: TextInputType.emailAddress,
-            onChanged: (newValue) {
-              setState(() {
-                emailAddresses[i] = newValue;
-              });
+            onChanged: (value) {
+              _emailAddresses[i] = value;
             },
-            decoration: InputDecoration(
-              labelText: '$label ${i + 1}',
-            ),
           ),
+        const SizedBox(height: 8),
         ElevatedButton(
-          onPressed: () => _addEmail(emailAddresses),
-          child: Text('Add $label'),
+          onPressed: () {
+            setState(() {
+              _emailAddresses.add('');
+            });
+          },
+          child: const Text('Add Email Address'),
         ),
-        const SizedBox(height: 10),
       ],
     );
   }
 
-  Widget _buildLinkFields(String label, List<String> userLinks) {
+  Widget _buildLinkFields() {
     return Column(
       children: [
-        for (int i = 0; i < userLinks.length; i++)
+        for (int i = 0; i < _links.length; i++)
           TextFormField(
-            initialValue: userLinks[i],
-            keyboardType: TextInputType.url,
-            onChanged: (newValue) {
-              setState(() {
-                userLinks[i] = newValue;
-              });
-            },
+            initialValue: _links[i],
             decoration: InputDecoration(
-              labelText: '$label ${i + 1}',
+              labelText: 'Link',
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () {
+                  setState(() {
+                    _links.removeAt(i);
+                  });
+                },
+              ),
             ),
+            keyboardType: TextInputType.url,
+            onChanged: (value) {
+              _links[i] = value;
+            },
           ),
+        const SizedBox(height: 8),
         ElevatedButton(
-          onPressed: () => _addLink(userLinks),
-          child: Text('Add $label'),
+          onPressed: () {
+            setState(() {
+              _links.add('');
+            });
+          },
+          child: const Text('Add Link'),
         ),
-        const SizedBox(height: 10),
       ],
     );
   }
 
   Widget _buildInterests() {
     return Wrap(
-      spacing: 8.0,
+      spacing: 8,
       children: _interests.map((interest) {
         return FilterChip(
-          label: Text(interest),
-          selected: _selectedInterests.contains(interest),
-          onSelected: (bool selected) {
+          label: Text(interest.trim()),
+          selected: _selectedInterests.contains(interest.trim()),
+          onSelected: (selected) {
             setState(() {
               if (selected) {
-                _selectedInterests.add(interest);
+                _selectedInterests.add(interest.trim());
               } else {
-                _selectedInterests.remove(interest);
+                _selectedInterests.remove(interest.trim());
               }
             });
           },
@@ -440,95 +391,148 @@ class AddPersonViewState extends State<AddPersonView> {
     );
   }
 
+  Widget _buildEducationFields() {
+    return Column(
+      children: [
+        for (int i = 1; i <= _educationDetails.length; i++)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DropdownButtonFormField<String>(
+                value: _educationDetails[i - 1]['degree']!.isNotEmpty &&
+                        _degrees.contains(_educationDetails[i - 1]['degree'])
+                    ? _educationDetails[i - 1]['degree']
+                    : null,
+                decoration: const InputDecoration(
+                  labelText: 'Degree',
+                ),
+                items: _degrees.toSet().map((degree) {
+                  return DropdownMenuItem(
+                    value: degree,
+                    child: Text(degree),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _educationDetails[i - 1]['degree'] = value ?? '';
+                  });
+                },
+              ),
+              TextFormField(
+                initialValue: _educationDetails[i - 1]['institution'],
+                decoration: InputDecoration(
+                  labelText: 'Institution',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () {
+                      setState(() {
+                        _educationDetails.removeAt(i - 1);
+                      });
+                    },
+                  ),
+                ),
+                onChanged: (value) {
+                  _educationDetails[i - 1]['institution'] = value;
+                },
+              ),
+              TextFormField(
+                initialValue: _educationDetails[i - 1]['year'],
+                decoration: const InputDecoration(
+                  labelText: 'Year',
+                ),
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  _educationDetails[i - 1]['year'] = value;
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        const SizedBox(height: 8),
+        ElevatedButton(
+          onPressed: () {
+            setState(() {
+              _educationDetails.add({
+                'degree': '',
+                'institution': '',
+                'year': '',
+              });
+            });
+          },
+          child: const Text('Add Education'),
+        ),
+        const SizedBox(height: 16.0),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Person'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const PeoplePage()),
-            );
-          },
-        ),
-      ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(),
         child: Form(
           key: _formKey,
-          child: ListView(
-            children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: CircleAvatar(
-                  radius: 90,
-                  backgroundColor: Colors.grey[300],
-                  backgroundImage: _photo != null ? MemoryImage(_photo!) : null,
-                  child: _photo == null
-                      ? const Icon(Icons.person, size: 90)
-                      : null,
-                ),
+          child: ListView(padding: const EdgeInsets.all(16.0), children: [
+            GestureDetector(
+              onTap: _pickImage,
+              child: CircleAvatar(
+                radius: 90,
+                backgroundColor: Colors.grey.shade300,
+                backgroundImage: _photo != null ? MemoryImage(_photo!) : null,
+                child: _photo == null
+                    ? const Icon(Icons.add_a_photo,
+                        size: 50, color: Colors.white)
+                    : null,
               ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _controllers['Name'],
-                keyboardType: TextInputType.name,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a name';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            _buildTextFields(key: 'Name'),
+            _buildSearchFields(key: 'Relation', suggestions: _relations),
+            _buildSearchFields(key: 'Gender', suggestions: _gender),
+            TextFormField(
+              controller: _controllers['Date of Birth'],
+              decoration: const InputDecoration(
+                labelText: 'Date of Birth',
+                hintText: 'Enter your date of birth',
+                suffixIcon: Icon(Icons.calendar_today),
               ),
-              _buildSearchFields('Relation', _relations),
-              _buildSearchFields('Gender', _gender),
-              TextFormField(
-                controller: _controllers['Date of Birth']!,
-                // keyboardType: TextInputType.datetime,
-                decoration: const InputDecoration(labelText: 'Date of Birth'),
-                onTap: () async {
-                  FocusScope.of(context).requestFocus(FocusNode());
-                  final pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(1900),
-                    lastDate: DateTime(2100),
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      _controllers['Date of Birth']!.text =
-                          "${pickedDate.year}-${pickedDate.month}-${pickedDate.day}";
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 10),
-              _buildTextFields('Place of Birth', TextInputType.text),
-              _buildTextFields('Present Address', TextInputType.text),
-              _buildTextFields('Present Pincode', TextInputType.number),
-              _buildSearchFields('Present Country', _countries),
-              _buildTextFields('Permanent Address', TextInputType.text),
-              _buildSearchFields('Marital Status', _maritalStatuses),
-              _buildSearchFields('Profession', _professions),
-              _buildPhoneNumberFields('Phone Number', _phoneNumbers),
-              _buildEmailFields('Email Address', _emailAddresses),
-              _buildLinkFields('Link', _links),
-              _buildEducationFields(),
-              ElevatedButton(
-                onPressed: _addEducationField,
-                child: const Text('Add Education'),
-              ),
-              const SizedBox(height: 10),
-              const Text('Interests', style: TextStyle(fontSize: 16)),
-              const SizedBox(height: 10),
-              _buildInterests(),
-              const SizedBox(height: 75),
-            ],
-          ),
+              readOnly: true,
+              onTap: () async {
+                FocusScope.of(context).requestFocus(FocusNode());
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(1900),
+                  lastDate: DateTime.now(),
+                );
+                if (pickedDate != null) {
+                  String formattedDate =
+                      "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+                  setState(() {
+                    _controllers['Date of Birth']?.text = formattedDate;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 16.0),
+            _buildTextFields(key: 'Place of Birth'),
+            _buildTextFields(key: 'Present Address'),
+            _buildTextFields(key: 'Present Pincode'),
+            _buildSearchFields(key: 'Present Country', suggestions: _countries),
+            _buildSearchFields(
+                key: 'Marital Status', suggestions: _maritalStatuses),
+            _buildSearchFields(key: 'Profession', suggestions: _professions),
+            _buildTextFields(key: 'Work Address'),
+            _buildPhoneNumberFields(),
+            _buildEmailFields(),
+            _buildLinkFields(),
+            _buildEducationFields(),
+            const Text('Interests',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8.0),
+            _buildInterests(),
+            const SizedBox(height: 100.0),
+          ]),
         ),
       ),
       floatingActionButton: Column(
