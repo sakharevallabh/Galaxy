@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/expense_model.dart';
+import 'package:Galaxy/model/expense_model.dart';
 
 class ExpenseDetailsPage extends StatelessWidget {
   final ExpenseModel expense;

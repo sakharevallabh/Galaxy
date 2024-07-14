@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/data/drawer_items.dart';
-import 'package:galaxy/model/drawer_model.dart';
-import 'package:galaxy/pages/accounts_page.dart';
-import 'package:galaxy/pages/achivements_page.dart';
-import 'package:galaxy/pages/assets_page.dart';
-import 'package:galaxy/pages/documents_page.dart';
-import 'package:galaxy/pages/expenses_page.dart';
-import 'package:galaxy/pages/home_page.dart';
-import 'package:galaxy/pages/my_universe_page.dart';
-import 'package:galaxy/pages/people_page.dart';
-import 'package:galaxy/pages/profile_settings_page.dart';
-import 'package:galaxy/pages/settings_page.dart';
-import 'package:galaxy/pages/vehicles_page.dart';
-import 'package:galaxy/provider/navigation_provider.dart';
+import 'package:Galaxy/data/drawer_items.dart';
+import 'package:Galaxy/model/drawer_model.dart';
+import 'package:Galaxy/pages/accounts_page.dart';
+import 'package:Galaxy/pages/achivements_page.dart';
+import 'package:Galaxy/pages/assets_page.dart';
+import 'package:Galaxy/pages/documents_page.dart';
+import 'package:Galaxy/pages/expenses_page.dart';
+import 'package:Galaxy/pages/home_page.dart';
+import 'package:Galaxy/pages/my_universe_page.dart';
+import 'package:Galaxy/pages/people_page.dart';
+import 'package:Galaxy/pages/profile_settings_page.dart';
+import 'package:Galaxy/pages/settings_page.dart';
+import 'package:Galaxy/pages/vehicles_page.dart';
+import 'package:Galaxy/provider/navigation_provider.dart';
 import 'package:provider/provider.dart';
 
 class NavigationDrawerWidget extends StatefulWidget {

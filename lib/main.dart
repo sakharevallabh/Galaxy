@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:galaxy/pages/home_page.dart';
-import 'package:galaxy/pages/lock_screen.dart';
-import 'package:galaxy/provider/assets_data_provider.dart';
-import 'package:galaxy/provider/navigation_provider.dart';
-import 'package:galaxy/provider/people_provider.dart';
+import 'package:Galaxy/pages/home_page.dart';
+import 'package:Galaxy/pages/lock_screen.dart';
+import 'package:Galaxy/provider/assets_data_provider.dart';
+import 'package:Galaxy/provider/navigation_provider.dart';
+import 'package:Galaxy/provider/people_provider.dart';
 import 'package:provider/provider.dart';
 
 Future main() async {

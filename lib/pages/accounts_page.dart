@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/account_model.dart';
-import 'package:galaxy/views/details/account_details.dart';
-import 'package:galaxy/views/forms/add_account.dart';
-import 'package:galaxy/views/overview/accounts_overview.dart';
+import 'package:Galaxy/model/account_model.dart';
+import 'package:Galaxy/views/details/account_details.dart';
+import 'package:Galaxy/views/forms/add_account.dart';
+import 'package:Galaxy/views/overview/accounts_overview.dart';
 
 class AccountsPage extends StatefulWidget {
   const AccountsPage({super.key});

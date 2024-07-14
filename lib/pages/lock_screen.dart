@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:email_auth/email_auth.dart';
-import 'package:galaxy/pages/home_page.dart'; // Ensure this import is correct
+import 'package:Galaxy/pages/home_page.dart'; // Ensure this import is correct
 
 class LockScreen extends StatefulWidget {
   final VoidCallback onUnlock;

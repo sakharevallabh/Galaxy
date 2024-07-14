@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/asset_model.dart';
-import 'package:galaxy/views/details/asset_details.dart';
-import 'package:galaxy/views/forms/add_asset.dart';
-import 'package:galaxy/views/overview/assets_overview.dart';
+import 'package:Galaxy/model/asset_model.dart';
+import 'package:Galaxy/views/details/asset_details.dart';
+import 'package:Galaxy/views/forms/add_asset.dart';
+import 'package:Galaxy/views/overview/assets_overview.dart';
 
 class AssetsPage extends StatefulWidget {
   const AssetsPage({super.key});

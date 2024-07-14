@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/asset_model.dart';
+import 'package:Galaxy/model/asset_model.dart';
 
 class AssetDetailsPage extends StatelessWidget {
   final AssetModel asset;

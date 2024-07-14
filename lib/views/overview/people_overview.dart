@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/person_model.dart';
-import 'package:galaxy/provider/people_provider.dart';
-import 'package:galaxy/views/details/person_details.dart';
-import 'package:galaxy/widget/people_list_view.dart';
+import 'package:Galaxy/model/person_model.dart';
+import 'package:Galaxy/provider/people_provider.dart';
+import 'package:Galaxy/views/details/person_details.dart';
+import 'package:Galaxy/widget/people_list_view.dart';
 import 'package:provider/provider.dart';
 
 class PeopleOverview extends StatefulWidget {

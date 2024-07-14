@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:galaxy/model/person_model.dart';
+import 'package:Galaxy/model/person_model.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 

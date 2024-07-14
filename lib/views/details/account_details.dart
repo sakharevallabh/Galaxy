@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/account_model.dart';
+import 'package:Galaxy/model/account_model.dart';
 
 class AccountDetailsPage extends StatelessWidget {
   final AccountModel person;

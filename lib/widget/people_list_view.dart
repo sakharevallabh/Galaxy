@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/person_model.dart';
+import 'package:Galaxy/model/person_model.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class PeopleListView extends StatelessWidget {

@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:galaxy/helpers/people_database_helper.dart';
-import 'package:galaxy/pages/people_page.dart';
-import 'package:galaxy/provider/assets_data_provider.dart';
-import 'package:galaxy/provider/people_provider.dart';
-import 'package:galaxy/utils/image_utils.dart';
-import 'package:galaxy/widget/educationfield.dart';
-import 'package:galaxy/widget/searchfield.dart';
+import 'package:Galaxy/helpers/people_database_helper.dart';
+import 'package:Galaxy/pages/people_page.dart';
+import 'package:Galaxy/provider/assets_data_provider.dart';
+import 'package:Galaxy/provider/people_provider.dart';
+import 'package:Galaxy/utils/image_utils.dart';
+import 'package:Galaxy/widget/educationfield.dart';
+import 'package:Galaxy/widget/searchfield.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 
@@ -42,7 +42,11 @@ class AddPersonViewState extends State<AddPersonView> {
 
   @override
   void dispose() {
-    _clearForm(dispose: true);
+    _photo = null;
+    _controllers.forEach((_, controller) {
+      controller.removeListener(_onNameFieldChanged);
+      controller.dispose();
+    });
     super.dispose();
   }
 
@@ -73,17 +77,13 @@ class AddPersonViewState extends State<AddPersonView> {
   }
 
   void _clearForm({bool dispose = false}) {
-    if (!dispose) _formKey.currentState!.reset();
-
-    _controllers.forEach((_, controller) {
-      controller.removeListener(_onNameFieldChanged);
-      controller.dispose();
-    });
     if (!dispose) {
-      setState(() {
-        _photo = null;
+      _formKey.currentState!.reset();
+
+      _controllers.forEach((_, controller) {
+        controller.text = '';
       });
-    } else {
+
       _photo = null;
     }
   }
@@ -312,13 +312,9 @@ class AddPersonViewState extends State<AddPersonView> {
                 },
               ),
             ),
-            keyboardType: label == "Phone Number"
-                ? TextInputType.number
-                : label == "Email Address"
-                    ? TextInputType.emailAddress
-                    : label == "Link"
-                        ? TextInputType.url
-                        : TextInputType.text,
+            keyboardType: label == "Phone Number" ? TextInputType.number
+                : label == "Email Address" ? TextInputType.emailAddress
+                    : label == "Link" ? TextInputType.url : TextInputType.text,
             onChanged: (value) {
               onChanged(i, value);
             },
@@ -375,31 +371,23 @@ class AddPersonViewState extends State<AddPersonView> {
                       ),
                     ),
                     _buildTextFields(key: 'Name'),
-                    _buildSearchFields(
-                        key: 'Relation', suggestions: dataProvider.relations),
-                    _buildSearchFields(
-                        key: 'Gender', suggestions: dataProvider.genders),
+                    _buildSearchFields(key: 'Relation', suggestions: dataProvider.relations),
+                    _buildSearchFields(key: 'Gender', suggestions: dataProvider.genders),
                     _buildDateOfBirthField(),
                     const SizedBox(height: 16.0),
                     _buildTextFields(key: 'Place of Birth'),
                     _buildTextFields(key: 'Present Address'),
                     _buildTextFields(key: 'Present Pincode'),
-                    _buildSearchFields(
-                        key: 'Present Country',
-                        suggestions: dataProvider.countries),
-                    _buildSearchFields(
-                        key: 'Marital Status',
-                        suggestions: dataProvider.maritalStatuses),
-                    _buildSearchFields(
-                        key: 'Profession',
-                        suggestions: dataProvider.professions),
+                    _buildSearchFields(key: 'Present Country', suggestions: dataProvider.countries),
+                    _buildTextFields(key: 'Permanent Address'),
+                    _buildSearchFields(key: 'Marital Status', suggestions: dataProvider.maritalStatuses),
+                    _buildSearchFields(key: 'Profession', suggestions: dataProvider.professions),
                     _buildTextFields(key: 'Work Address'),
                     _buildPhoneNumberFields(),
                     _buildEmailFields(),
                     _buildLinkFields(),
                     _buildEducationFields(),
-                    const Text('Interests',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Interests', style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8.0),
                     _buildInterests(dataProvider.interests),
                     const SizedBox(height: 100.0),

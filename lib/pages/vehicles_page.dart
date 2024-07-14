@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/vehicle_model.dart';
-import 'package:galaxy/views/details/vehicle_details.dart';
-import 'package:galaxy/views/forms/add_vehicle.dart';
-import 'package:galaxy/views/overview/vehicles_overview.dart';
+import 'package:Galaxy/model/vehicle_model.dart';
+import 'package:Galaxy/views/details/vehicle_details.dart';
+import 'package:Galaxy/views/forms/add_vehicle.dart';
+import 'package:Galaxy/views/overview/vehicles_overview.dart';
 
 class VehiclesPage extends StatefulWidget {
   const VehiclesPage({super.key});

@@ -1,7 +1,7 @@
+import 'package:Galaxy/provider/people_provider.dart';
+import 'package:Galaxy/views/forms/add_person.dart';
+import 'package:Galaxy/views/overview/people_overview.dart';
 import 'package:flutter/material.dart';
-import 'package:galaxy/provider/people_provider.dart';
-import 'package:galaxy/views/forms/add_person.dart';
-import 'package:galaxy/views/overview/people_overview.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

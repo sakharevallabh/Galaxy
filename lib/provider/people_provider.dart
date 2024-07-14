@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/helpers/people_database_helper.dart';
-import 'package:galaxy/model/person_model.dart';
+import 'package:Galaxy/helpers/people_database_helper.dart';
+import 'package:Galaxy/model/person_model.dart';
 
 class PeopleProvider with ChangeNotifier {
   List<PersonModel> _personList = [];

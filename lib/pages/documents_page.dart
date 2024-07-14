@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/document_model.dart';
-import 'package:galaxy/views/details/document_details.dart';
-import 'package:galaxy/views/forms/add_document.dart';
-import 'package:galaxy/views/overview/documents_overview.dart';
+import 'package:Galaxy/model/document_model.dart';
+import 'package:Galaxy/views/details/document_details.dart';
+import 'package:Galaxy/views/forms/add_document.dart';
+import 'package:Galaxy/views/overview/documents_overview.dart';
 
 class DocumentsPage extends StatefulWidget {
   const DocumentsPage({super.key});

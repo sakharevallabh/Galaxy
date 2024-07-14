@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/document_model.dart';
+import 'package:Galaxy/model/document_model.dart';
 
 class DocumentDetailsPage extends StatelessWidget {
   final DocumentModel person;

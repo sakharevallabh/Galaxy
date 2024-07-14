@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/expense_model.dart';
-import 'package:galaxy/views/details/expense_details.dart';
-import 'package:galaxy/views/forms/add_expense.dart';
-import 'package:galaxy/views/overview/expenses_overview.dart';
+import 'package:Galaxy/model/expense_model.dart';
+import 'package:Galaxy/views/details/expense_details.dart';
+import 'package:Galaxy/views/forms/add_expense.dart';
+import 'package:Galaxy/views/overview/expenses_overview.dart';
 
 class ExpensesPage extends StatefulWidget {
   const ExpensesPage({super.key});

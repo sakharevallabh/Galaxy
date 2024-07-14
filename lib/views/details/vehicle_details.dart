@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/vehicle_model.dart';
+import 'package:Galaxy/model/vehicle_model.dart';
 
 class VehicleDetailsPage extends StatelessWidget {
   final VehicleModel vehicle;

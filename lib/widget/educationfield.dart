@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/provider/assets_data_provider.dart';
+import 'package:Galaxy/provider/assets_data_provider.dart';
 import 'package:provider/provider.dart';
 
 class EducationField extends StatefulWidget {

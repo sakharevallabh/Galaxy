@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/achievement_model.dart';
+import 'package:Galaxy/model/achievement_model.dart';
 
 class AchievementDetailsPage extends StatelessWidget {
   final AchievementModel achievement;

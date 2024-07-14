@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:galaxy/model/achievement_model.dart';
-import 'package:galaxy/views/details/achivement_details.dart';
-import 'package:galaxy/views/forms/add_achievement.dart';
-import 'package:galaxy/views/overview/achivements_overview.dart';
+import 'package:Galaxy/model/achievement_model.dart';
+import 'package:Galaxy/views/details/achivement_details.dart';
+import 'package:Galaxy/views/forms/add_achievement.dart';
+import 'package:Galaxy/views/overview/achivements_overview.dart';
 
 class AchivementsPage extends StatefulWidget {
   const AchivementsPage({super.key});
