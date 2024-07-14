@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:galaxy/provider/assets_data_provider.dart';
+import 'package:provider/provider.dart';
 
 class EducationField extends StatefulWidget {
   final int index;
@@ -23,15 +25,27 @@ class EducationField extends StatefulWidget {
 class EducationFieldState extends State<EducationField> {
   @override
   Widget build(BuildContext context) {
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+
+    if (widget.index < 0 || widget.index >= widget.educationDetails.length) {
+      return const SizedBox.shrink();
+    }
+
+    if (widget.degreeControllers.length != widget.educationDetails.length ||
+        widget.institutionControllers.length != widget.educationDetails.length ||
+        widget.yearControllers.length != widget.educationDetails.length) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         DropdownButtonFormField<String>(
-          value: widget.educationDetails[widget.index - 1]['degree']!.isNotEmpty
-              ? widget.educationDetails[widget.index - 1]['degree']
+          value: widget.educationDetails[widget.index]['degree']!.isNotEmpty
+              ? widget.educationDetails[widget.index]['degree']
               : null,
           decoration: const InputDecoration(labelText: 'Degree'),
-          items: ['Graduate', 'Bachelor', 'Master', 'PhD', 'Other']
+          items: dataProvider.qualifications
               .map((degree) => DropdownMenuItem(
                     value: degree,
                     child: Text(degree),
@@ -39,33 +53,33 @@ class EducationFieldState extends State<EducationField> {
               .toList(),
           onChanged: (value) {
             setState(() {
-              widget.educationDetails[widget.index - 1]['degree'] = value ?? '';
+              widget.educationDetails[widget.index]['degree'] = value ?? '';
             });
           },
         ),
         TextFormField(
-          controller: widget.institutionControllers[widget.index - 1],
+          controller: widget.institutionControllers[widget.index],
           decoration: const InputDecoration(labelText: 'Institution'),
           onChanged: (value) {
-            widget.educationDetails[widget.index - 1]['institution'] = value;
+            widget.educationDetails[widget.index]['institution'] = value;
           },
         ),
         TextFormField(
-          controller: widget.yearControllers[widget.index - 1],
+          controller: widget.yearControllers[widget.index],
           decoration: const InputDecoration(labelText: 'Year'),
           keyboardType: TextInputType.number,
           onChanged: (value) {
-            widget.educationDetails[widget.index - 1]['year'] = value;
+            widget.educationDetails[widget.index]['year'] = value;
           },
         ),
         const SizedBox(height: 8),
         ElevatedButton(
           onPressed: () {
             setState(() {
-              widget.educationDetails.removeAt(widget.index - 1);
-              widget.degreeControllers.removeAt(widget.index - 1);
-              widget.institutionControllers.removeAt(widget.index - 1);
-              widget.yearControllers.removeAt(widget.index - 1);
+              widget.educationDetails.removeAt(widget.index);
+              widget.degreeControllers.removeAt(widget.index);
+              widget.institutionControllers.removeAt(widget.index);
+              widget.yearControllers.removeAt(widget.index);
             });
           },
           child: const Text('Delete'),

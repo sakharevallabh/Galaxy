@@ -18,17 +18,21 @@ class PeoplePageState extends State<PeoplePage> {
   @override
   void initState() {
     super.initState();
-    _selectedIndex = 0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
-      _checkAndShowBanner();
+      if (mounted) {
+        _selectedIndex = 0;
+        Provider.of<PeopleProvider>(context, listen: false).refreshPeople();
+        _checkAndShowBanner();
+      }
     });
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (mounted) {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
 
   Future<void> _checkAndShowBanner() async {

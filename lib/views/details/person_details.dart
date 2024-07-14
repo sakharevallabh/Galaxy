@@ -31,14 +31,9 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   late Future<PersonModel?> _personDetailsFuture;
   final Map<String, String> _selectedFields = {};
   final Map<String, TextEditingController> _controllers = {};
-  final List<String> _genders = ['Male', 'Female'];
-  final List<String> _maritalStatuses = ['Married', 'Unmarried', 'Divorced'];
   bool _isInitialized = false;
   Uint8List? _photo;
   DateTime? _dob;
-  List<String> _countries = [];
-  List<String> _professions = [];
-  List<String> _relations = [];
   List<Map<String, String>> _educationDetails = [
     {'degree': '', 'institution': '', 'year': ''}
   ];
@@ -433,8 +428,8 @@ Widget _buildDynamicListFields(String labelPrefix, List<String>? items, TextInpu
   Widget _buildEducationFields() {
     return Column(
       children: [
-        for (int i = 1; i < _educationDetails.length+1; i++)
-        _buildGestureDetector('Education Details $i', null, 'educationfield', i),
+        for (int i = 0; i < _educationDetails.length; i++)
+        _buildGestureDetector('Education Details ${i + 1}', null, 'educationfield', i),
         ElevatedButton(
           onPressed: () {
             setState(() {
@@ -558,7 +553,7 @@ Widget _buildDynamicListFields(String labelPrefix, List<String>? items, TextInpu
                     ),
                     _buildGestureDetector('Name', null, 'editablefield', null),
                     _buildGestureDetector('Relation', dataProvider.relations, 'searchfield', null),
-                    _buildGestureDetector('Gender', _genders, 'searchfield',null),
+                    _buildGestureDetector('Gender', dataProvider.genders, 'searchfield',null),
                     _buildGestureDetector('Date of Birth', null, 'datefield', null),
                     _buildGestureDetector('Age', null, 'editablefield', null),
                     _buildGestureDetector('Place of Birth', null, 'editablefield', null),
@@ -566,7 +561,7 @@ Widget _buildDynamicListFields(String labelPrefix, List<String>? items, TextInpu
                     _buildGestureDetector('Present Country', dataProvider.countries, 'searchfield', null),
                     _buildGestureDetector('Present Pincode', null, 'editablefield', null, TextInputType.number),
                     _buildGestureDetector('Permanent Address', null, 'editablefield', null),
-                    _buildGestureDetector('Marital Status', _maritalStatuses, 'searchfield', null),
+                    _buildGestureDetector('Marital Status', dataProvider.maritalStatuses, 'searchfield', null),
                     _buildGestureDetector('Profession', dataProvider.professions, 'searchfield', null),
                     _buildDynamicFields('Phone Number', person.phoneNumbers!, TextInputType.phone),
                     _buildDynamicFields('Email Address', person.emailAddresses!, TextInputType.emailAddress),
